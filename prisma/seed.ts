@@ -1,12 +1,7 @@
-import { Pool } from 'pg'
-import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient, LeadStatus, LeadType, Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
-const connectionString = process.env.DATABASE_URL
-const pool = new Pool({ connectionString })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+const prisma = new PrismaClient()
 
 async function main() {
     // Clear existing leads first? No, append or reset?
@@ -103,11 +98,9 @@ async function main() {
 main()
     .then(async () => {
         await prisma.$disconnect()
-        await pool.end() // Close pool
     })
     .catch(async (e) => {
         console.error(e)
         await prisma.$disconnect()
-        await pool.end()
         process.exit(1)
     })
