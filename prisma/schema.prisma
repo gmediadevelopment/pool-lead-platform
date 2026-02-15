@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 enum Role {
@@ -35,16 +35,30 @@ model User {
   contactPerson String?
   phone         String?
   address       String?
-  zipCodes      String[]  // Service areas
+  zipCodes      ServiceArea[]
   radius        Int?      // Service radius in km
-  poolTypes     String[]  // Specialized pool types
-  
+  poolTypes     Specialty[]
+
   credits       Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
   transactions  Transaction[]
   purchasedLeads Lead[]   @relation("PurchasedLeads")
+}
+
+model ServiceArea {
+  id     String @id @default(cuid())
+  zip    String
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Specialty {
+  id     String @id @default(cuid())
+  type   String // Pool type
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Lead {
