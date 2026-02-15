@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  COMPANY
+}
+
+enum LeadStatus {
+  NEW           // Raw from sheet
+  VERIFIED      // Checked by Admin
+  PUBLISHED     // Visible in marketplace
+  SOLD          // Sold to max buyers
+  ARCHIVED
+}
+
+enum LeadType {
+  INTEREST      // 49 EUR
+  CONSULTATION  // 99 EUR
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String    // Hashed
+  role          Role      @default(COMPANY)
+  
+  // Company Details
+  companyName   String?
+  contactPerson String?
+  phone         String?
+  address       String?
+  zipCodes      String[]  // Service areas
+  radius        Int?      // Service radius in km
+  poolTypes     String[]  // Specialized pool types
+  
+  credits       Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  transactions  Transaction[]
+  purchasedLeads Lead[]   @relation("PurchasedLeads")
+}
+
+model Lead {
+  id            String    @id @default(cuid())
+  
+  // Source Data (from Google Sheet)
+  externalId    String?   // Row ID or similar
+  date          DateTime?
+  firstName     String?
+  lastName      String?
+  email         String?
+  phone         String?
+  zip           String?
+  city          String?
+  poolType      String?
+  dimensions    String?
+  features      String?   // JSON or Description
+  estimatedPrice Decimal?
+  timeline      String?
+  budgetConfirmed Boolean @default(false)
+  
+  // Platform Data
+  status        LeadStatus @default(NEW)
+  type          LeadType   @default(INTEREST)
+  price         Decimal    @default(49.00)
+  
+  // Sales Logic
+  exclusive     Boolean    @default(true)
+  maxSales      Int        @default(1)
+  salesCount    Int        @default(0)
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  transactions  Transaction[]
+  buyers        User[]     @relation("PurchasedLeads")
+}
+
+model Transaction {
+  id            String    @id @default(cuid())
+  amount        Decimal
+  status        String    // PENDING, COMPLETED, FAILED
+  paymentId     String?   // PayPal Order ID
+  invoiceUrl    String?
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  leadId        String
+  lead          Lead      @relation(fields: [leadId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+}
