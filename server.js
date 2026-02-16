@@ -4,15 +4,32 @@ const next = require('next');
 const fs = require('fs');
 const path = require('path');
 
+// Force Prisma/MySQL to use 127.0.0.1 to avoid IPv6 (::1) access denied errors on Hostinger
+function forceIpv4() {
+    if (process.env.DATABASE_URL && (process.env.DATABASE_URL.includes('main-hosting.eu') || process.env.DATABASE_URL.includes('localhost'))) {
+        process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/@([^:/]+)/, '@127.0.0.1');
+        return true;
+    }
+    return false;
+}
+
 // Try to load .env manually just in case
 try {
     const dotenv = require('dotenv');
-    const envPath = path.join(__dirname, '.env');
-    if (fs.existsSync(envPath)) {
-        dotenv.config({ path: envPath });
-        console.log('.env file loaded from', envPath);
-    } else {
-        dotenv.config(); // Fallback to default
+    const envPaths = [path.join(__dirname, '.env'), path.join(__dirname, 'hostinger.env')];
+    let loaded = false;
+    for (const envPath of envPaths) {
+        if (fs.existsSync(envPath)) {
+            dotenv.config({ path: envPath, override: true });
+            console.log('.env file loaded from', envPath);
+            loaded = true;
+            break;
+        }
+    }
+    if (!loaded) dotenv.config();
+
+    if (forceIpv4()) {
+        console.log('DATABASE_URL hostname forced to 127.0.0.1 (IPv4)');
     }
 } catch (e) {
     console.log('dotenv loading issue:', e.message);
@@ -42,7 +59,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v1.8 - IPv4 Force Test) ---');
+log('--- Server starting (v1.9 - Robust IPv4 Force) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
