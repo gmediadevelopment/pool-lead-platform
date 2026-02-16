@@ -42,10 +42,14 @@ export async function POST(req: Request) {
             { message: "Benutzer erstellt", user: { id: user.id, email: user.email } },
             { status: 201 }
         )
-    } catch (error) {
+    } catch (error: any) {
         console.error("Registration error:", error)
         return NextResponse.json(
-            { message: "Interner Serverfehler" },
+            {
+                message: "Interner Serverfehler",
+                error: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            },
             { status: 500 }
         )
     }
