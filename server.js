@@ -63,7 +63,7 @@ process.on('unhandledRejection', (reason, promise) => {
 process.env.PRISMA_CLIENT_ENGINE_TYPE = 'binary';
 process.env.PRISMA_CLI_QUERY_ENGINE_TYPE = 'binary';
 
-log('--- Server starting (v2.1 - Forced Binary Engine) ---');
+log('--- Server starting (v2.2 - MySQL2 Adapter Fix) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
