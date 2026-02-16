@@ -42,7 +42,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v1.4 - EL9 Engine Test) ---');
+log('--- Server starting (v1.5 - Official Binary Engine) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
