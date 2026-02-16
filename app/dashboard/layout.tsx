@@ -54,6 +54,15 @@ export default async function DashboardLayout({
                         <User className="h-4 w-4" />
                         Profil
                     </Link>
+                    {session.user?.role === "ADMIN" && (
+                        <Link
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-red-500 transition-all hover:text-red-900 dark:text-red-400 dark:hover:text-red-50 hover:bg-red-50 dark:hover:bg-red-950"
+                            href="/admin"
+                        >
+                            <ShieldCheck className="h-4 w-4" />
+                            Admin
+                        </Link>
+                    )}
                 </nav>
             </aside>
 
