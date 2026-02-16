@@ -59,11 +59,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-// Force Prisma to use the binary engine (v2.1 fix for Hostinger)
-process.env.PRISMA_CLIENT_ENGINE_TYPE = 'binary';
-process.env.PRISMA_CLI_QUERY_ENGINE_TYPE = 'binary';
-
-log('--- Server starting (v2.2 - MySQL2 Adapter Fix) ---');
+log('--- Server starting (v2.3 - MariaDB Adapter Fix) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
@@ -78,21 +74,21 @@ const port = process.env.PORT || 3000;
 const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
-// NEW: Direct MySQL Driver Test
+// NEW: Direct MariaDB Driver Test
 async function checkMysqlDirect() {
-    log('Running Direct MySQL Driver Check...');
+    log('Running Direct MariaDB Driver Check...');
     try {
-        const mysql = require('mysql2/promise');
+        const mariadb = require('mariadb');
         const url = process.env.DATABASE_URL;
         if (!url) throw new Error('DATABASE_URL is missing');
 
-        log('Attempting direct connection with mysql2...');
-        const connection = await mysql.createConnection(url);
-        log('Direct MySQL Connection: SUCCESS!');
-        await connection.end();
+        log('Attempting direct connection with mariadb...');
+        const conn = await mariadb.createConnection(url);
+        log('Direct MariaDB Connection: SUCCESS!');
+        await conn.end();
         return true;
     } catch (err) {
-        log(`Direct MySQL Connection: FAILED - ${err.message}`);
+        log(`Direct MariaDB Connection: FAILED - ${err.message}`);
         return false;
     }
 }
