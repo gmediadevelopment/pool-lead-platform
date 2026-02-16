@@ -42,7 +42,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v1.5 - Official Binary Engine) ---');
+log('--- Server starting (v1.6 - Non-blocking DB Check) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
@@ -57,25 +57,33 @@ const port = process.env.PORT || 3000;
 const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
-// Startup Database Test
+// Startup Database Test (Non-blocking with Timeout)
 async function checkDatabase() {
-    log('Running Startup Database Check...');
+    log('Running Startup Database Check (Non-blocking)...');
     try {
         const { PrismaClient } = require('@prisma/client');
         const prisma = new PrismaClient();
-        log('Prisma Client required. Attempting count...');
-        const count = await prisma.user.count();
+        log('Prisma Client required. Attempting count with 10s timeout...');
+
+        // Race between the query and a 10s timeout
+        const count = await Promise.race([
+            prisma.user.count(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Database Check Timeout (10s)')), 10000))
+        ]);
+
         log(`Database Check SUCCESS. User count: ${count}`);
         await prisma.$disconnect();
     } catch (err) {
-        log(`CRITICAL: Startup Database Check FAILED: ${err.message}`);
-        log(err.stack);
+        log(`ERROR: Startup Database Check: ${err.message}`);
+        if (err.stack) log(err.stack);
     }
 }
 
-app.prepare().then(async () => {
+app.prepare().then(() => {
     log('Next.js app prepared');
-    await checkDatabase();
+
+    // START DB CHECK IN BACKGROUND
+    checkDatabase().catch(err => log(`Background DB Check Error: ${err.message}`));
 
     createServer(async (req, res) => {
         log(`Incoming request: ${req.method} ${req.url}`);
