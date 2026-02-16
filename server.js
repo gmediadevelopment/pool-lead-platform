@@ -17,8 +17,13 @@ const log = (msg) => {
     try {
         fs.appendFileSync(logFile, entry);
     } catch (e) { }
-    console.log(msg);
+    process.stdout.write(entry);
 };
+
+// Redirect console to our log file to capture Next.js logs
+console.log = log;
+console.error = log;
+
 
 process.on('uncaughtException', (err) => {
     log(`UNCAUGHT EXCEPTION: ${err.message}\n${err.stack}`);
