@@ -35,7 +35,8 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting ---');
+log('--- Server starting (v1.2 - Static Binary Test) ---');
+log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
 if (process.env.DATABASE_URL) {
