@@ -6,9 +6,16 @@ const path = require('path');
 
 // Try to load .env manually just in case
 try {
-    require('dotenv').config();
+    const dotenv = require('dotenv');
+    const envPath = path.join(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath });
+        console.log('.env file loaded from', envPath);
+    } else {
+        dotenv.config(); // Fallback to default
+    }
 } catch (e) {
-    // dotenv might not be available yet
+    console.log('dotenv loading issue:', e.message);
 }
 
 const logFile = path.join(__dirname, 'debug.log');
