@@ -1,36 +1,53 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
+const fs = require('fs');
+const path = require('path');
 
-// Check if we are in production
+const logFile = path.join(__dirname, 'debug.log');
+const log = (msg) => {
+    const entry = `[${new Date().toISOString()}] ${msg}\n`;
+    fs.appendFileSync(logFile, entry);
+    console.log(msg);
+};
+
+log('--- Server starting ---');
+log(`NODE_ENV: ${process.env.NODE_ENV}`);
+log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
+log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
+
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
-
-// On Hostinger Passenger, the app root should be explicitly set
 const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
+    log('Next.js app prepared');
     createServer(async (req, res) => {
         try {
             const parsedUrl = parse(req.url, true);
             await handle(req, res, parsedUrl);
         } catch (err) {
-            console.error('Error occurred handling', req.url, err);
+            log(`ERROR during request ${req.url}: ${err.message}`);
             res.statusCode = 500;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
                 error: 'Internal Server Error',
                 message: err.message,
-                path: req.url
+                stack: dev ? err.stack : undefined
             }));
         }
     }).listen(port, (err) => {
-        if (err) throw err;
-        console.log(`> Ready on port ${port}`);
+        if (err) {
+            log(`FAILED to listen: ${err.message}`);
+            throw err;
+        }
+        log(`Server listening on port ${port}`);
     });
 }).catch((err) => {
-    console.error('Next.js preparation failed', err);
+    log(`CRITICAL: Next.js preparation failed: ${err.message}`);
+    log(err.stack);
     process.exit(1);
 });
+
 
