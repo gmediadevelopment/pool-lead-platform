@@ -1,9 +1,7 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import bcrypt from "bcryptjs"
-
-import { Role } from "@prisma/client"
 
 export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
@@ -25,11 +23,8 @@ export const authOptions: NextAuthOptions = {
                     return null
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: {
-                        email: credentials.email,
-                    },
-                })
+                // Use direct MySQL2 connection instead of Prisma
+                const user = await db.findUserByEmail(credentials.email)
 
                 if (!user) {
                     return null
@@ -63,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.role = token.role as Role
+                session.user.role = token.role as string
                 session.user.id = token.id as string
             }
             return session
