@@ -38,15 +38,37 @@ process.on('unhandledRejection', (reason, promise) => {
 log('--- Server starting ---');
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
+if (process.env.DATABASE_URL) {
+    log(`DATABASE_URL starts with: ${process.env.DATABASE_URL.substring(0, 15)}...`);
+}
 log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
+log(`Available Env Keys: ${Object.keys(process.env).filter(k => !k.includes('SECRET') && !k.includes('PASS')).join(', ')}`);
 
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
 const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+// Startup Database Test
+async function checkDatabase() {
+    log('Running Startup Database Check...');
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        log('Prisma Client required. Attempting count...');
+        const count = await prisma.user.count();
+        log(`Database Check SUCCESS. User count: ${count}`);
+        await prisma.$disconnect();
+    } catch (err) {
+        log(`CRITICAL: Startup Database Check FAILED: ${err.message}`);
+        log(err.stack);
+    }
+}
+
+app.prepare().then(async () => {
     log('Next.js app prepared');
+    await checkDatabase();
+
     createServer(async (req, res) => {
         log(`Incoming request: ${req.method} ${req.url}`);
         try {
@@ -76,5 +98,6 @@ app.prepare().then(() => {
     log(err.stack);
     process.exit(1);
 });
+
 
 
