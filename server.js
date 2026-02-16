@@ -59,7 +59,11 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v2.0 - Static Engine Final) ---');
+// Force Prisma to use the binary engine (v2.1 fix for Hostinger)
+process.env.PRISMA_CLIENT_ENGINE_TYPE = 'binary';
+process.env.PRISMA_CLI_QUERY_ENGINE_TYPE = 'binary';
+
+log('--- Server starting (v2.1 - Forced Binary Engine) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
