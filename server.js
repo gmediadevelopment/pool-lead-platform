@@ -4,6 +4,13 @@ const next = require('next');
 const fs = require('fs');
 const path = require('path');
 
+// Try to load .env manually just in case
+try {
+    require('dotenv').config();
+} catch (e) {
+    // dotenv might not be available yet
+}
+
 const logFile = path.join(__dirname, 'debug.log');
 const log = (msg) => {
     const entry = `[${new Date().toISOString()}] ${msg}\n`;
@@ -24,18 +31,21 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
     log('Next.js app prepared');
     createServer(async (req, res) => {
+        log(`Incoming request: ${req.method} ${req.url}`);
         try {
             const parsedUrl = parse(req.url, true);
             await handle(req, res, parsedUrl);
         } catch (err) {
-            log(`ERROR during request ${req.url}: ${err.message}`);
-            res.statusCode = 500;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({
-                error: 'Internal Server Error',
-                message: err.message,
-                stack: dev ? err.stack : undefined
-            }));
+            log(`CRASH during request ${req.url}: ${err.message}\n${err.stack}`);
+            if (!res.headersSent) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({
+                    error: 'Internal Server Error',
+                    message: err.message,
+                    stack: dev ? err.stack : undefined
+                }));
+            }
         }
     }).listen(port, (err) => {
         if (err) {
