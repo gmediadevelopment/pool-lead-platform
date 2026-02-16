@@ -59,7 +59,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v1.9 - Robust IPv4 Force) ---');
+log('--- Server starting (v2.0 - Static Engine Final) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
