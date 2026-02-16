@@ -102,11 +102,11 @@ export const db = {
 
     async findLeadsByBuyerId(buyerId: string): Promise<Lead[]> {
         const pool = getPool()
-        // Note: This requires a join with the _LeadBuyers table
+        // Note: This requires a join with the _PurchasedLeads table (Prisma's many-to-many relation table)
         const [rows] = await pool.execute(
             `SELECT l.* FROM Lead l 
-             INNER JOIN _LeadBuyers lb ON l.id = lb.B 
-             WHERE lb.A = ? 
+             INNER JOIN _PurchasedLeads pl ON l.id = pl.B 
+             WHERE pl.A = ? 
              ORDER BY l.createdAt DESC`,
             [buyerId]
         )
