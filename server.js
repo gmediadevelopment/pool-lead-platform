@@ -11,9 +11,20 @@ const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-    createServer((req, res) => {
-        const parsedUrl = parse(req.url, true);
-        handle(req, res, parsedUrl);
+    createServer(async (req, res) => {
+        try {
+            const parsedUrl = parse(req.url, true);
+            await handle(req, res, parsedUrl);
+        } catch (err) {
+            console.error('Error occurred handling', req.url, err);
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({
+                error: 'Internal Server Error',
+                message: err.message,
+                path: req.url
+            }));
+        }
     }).listen(port, (err) => {
         if (err) throw err;
         console.log(`> Ready on port ${port}`);
