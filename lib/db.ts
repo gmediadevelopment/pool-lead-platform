@@ -113,6 +113,23 @@ export const db = {
         return rows as Lead[]
     },
 
+    async findNewLeads(): Promise<Lead[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM Lead WHERE status = ? ORDER BY createdAt DESC',
+            ['NEW']
+        )
+        return rows as Lead[]
+    },
+
+    async updateLeadStatus(leadId: string, status: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute(
+            'UPDATE Lead SET status = ?, updatedAt = ? WHERE id = ?',
+            [status, new Date(), leadId]
+        )
+    },
+
     async testConnection(): Promise<boolean> {
         try {
             const pool = getPool()

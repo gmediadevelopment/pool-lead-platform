@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -6,14 +6,7 @@ import { Check, X, MapPin } from "lucide-react"
 import { verifyLead, rejectLead } from "./actions"
 
 export default async function AdminDashboard() {
-    const newLeads = await prisma.lead.findMany({
-        where: {
-            status: "NEW",
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
-    })
+    const newLeads = await db.findNewLeads()
 
     return (
         <div className="space-y-6">
