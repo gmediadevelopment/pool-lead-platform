@@ -22,7 +22,29 @@ export interface User {
     email: string
     password: string
     companyName: string
+    phone?: string
+    address?: string
     role: string
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface Lead {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    phone?: string
+    zip: string
+    city: string
+    poolType: string
+    dimensions: string
+    features?: string
+    estimatedPrice: number
+    timeline: string
+    type: string
+    status: string
+    price: number
     createdAt: Date
     updatedAt: Date
 }
@@ -33,6 +55,16 @@ export const db = {
         const [rows] = await pool.execute(
             'SELECT * FROM User WHERE email = ? LIMIT 1',
             [email]
+        )
+        const users = rows as User[]
+        return users.length > 0 ? users[0] : null
+    },
+
+    async findUserById(id: string): Promise<User | null> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM User WHERE id = ? LIMIT 1',
+            [id]
         )
         const users = rows as User[]
         return users.length > 0 ? users[0] : null
@@ -59,6 +91,28 @@ export const db = {
         }
     },
 
+    async findPublishedLeads(): Promise<Lead[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM Lead WHERE status = ? ORDER BY createdAt DESC',
+            ['PUBLISHED']
+        )
+        return rows as Lead[]
+    },
+
+    async findLeadsByBuyerId(buyerId: string): Promise<Lead[]> {
+        const pool = getPool()
+        // Note: This requires a join with the _LeadBuyers table
+        const [rows] = await pool.execute(
+            `SELECT l.* FROM Lead l 
+             INNER JOIN _LeadBuyers lb ON l.id = lb.B 
+             WHERE lb.A = ? 
+             ORDER BY l.createdAt DESC`,
+            [buyerId]
+        )
+        return rows as Lead[]
+    },
+
     async testConnection(): Promise<boolean> {
         try {
             const pool = getPool()
@@ -70,3 +124,4 @@ export const db = {
         }
     }
 }
+

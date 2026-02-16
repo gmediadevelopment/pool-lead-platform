@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,18 +12,7 @@ export default async function MyLeadsPage() {
         return <div>Bitte einloggen.</div>
     }
 
-    const myLeads = await prisma.lead.findMany({
-        where: {
-            buyers: {
-                some: {
-                    id: session.user.id,
-                },
-            },
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
-    })
+    const myLeads = await db.findLeadsByBuyerId(session.user.id)
 
     return (
         <div className="space-y-6">

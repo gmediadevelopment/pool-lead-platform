@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { BuyButton } from "@/components/buy-button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,14 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Ruler, Waves } from "lucide-react"
 
 export default async function LeadsPage() {
-    const leads = await prisma.lead.findMany({
-        where: {
-            status: "PUBLISHED",
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
-    })
+    const leads = await db.findPublishedLeads()
 
     return (
         <div className="space-y-6">

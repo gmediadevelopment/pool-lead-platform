@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -13,9 +13,7 @@ export default async function ProfilePage() {
         return <div>Bitte einloggen.</div>
     }
 
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-    })
+    const user = await db.findUserById(session.user.id)
 
     if (!user) return <div>Nutzer nicht gefunden.</div>
 
