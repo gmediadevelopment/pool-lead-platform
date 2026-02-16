@@ -42,7 +42,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v1.6 - Non-blocking DB Check) ---');
+log('--- Server starting (v1.7 - Direct MySQL & EL9 Target) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
@@ -50,31 +50,50 @@ if (process.env.DATABASE_URL) {
     log(`DATABASE_URL starts with: ${process.env.DATABASE_URL.substring(0, 15)}...`);
 }
 log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
-log(`Available Env Keys: ${Object.keys(process.env).filter(k => !k.includes('SECRET') && !k.includes('PASS')).join(', ')}`);
 
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
 const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
+// NEW: Direct MySQL Driver Test
+async function checkMysqlDirect() {
+    log('Running Direct MySQL Driver Check...');
+    try {
+        const mysql = require('mysql2/promise');
+        const url = process.env.DATABASE_URL;
+        if (!url) throw new Error('DATABASE_URL is missing');
+
+        log('Attempting direct connection with mysql2...');
+        const connection = await mysql.createConnection(url);
+        log('Direct MySQL Connection: SUCCESS!');
+        await connection.end();
+        return true;
+    } catch (err) {
+        log(`Direct MySQL Connection: FAILED - ${err.message}`);
+        return false;
+    }
+}
+
 // Startup Database Test (Non-blocking with Timeout)
 async function checkDatabase() {
-    log('Running Startup Database Check (Non-blocking)...');
+    log('Running Startup Prisma Check...');
+    const directSuccess = await checkMysqlDirect();
+
     try {
         const { PrismaClient } = require('@prisma/client');
         const prisma = new PrismaClient();
-        log('Prisma Client required. Attempting count with 10s timeout...');
+        log('Prisma Client required. Attempting count with 15s timeout...');
 
-        // Race between the query and a 10s timeout
         const count = await Promise.race([
             prisma.user.count(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Database Check Timeout (10s)')), 10000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Prisma Request Timeout (15s)')), 15000))
         ]);
 
-        log(`Database Check SUCCESS. User count: ${count}`);
+        log(`Prisma Check SUCCESS. User count: ${count}`);
         await prisma.$disconnect();
     } catch (err) {
-        log(`ERROR: Startup Database Check: ${err.message}`);
+        log(`ERROR: Prisma Check: ${err.message}`);
         if (err.stack) log(err.stack);
     }
 }
