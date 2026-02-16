@@ -4,14 +4,20 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Check, X, MapPin } from "lucide-react"
 import { verifyLead, rejectLead } from "./actions"
+import { SyncButton } from "./sync-button"
 
 export default async function AdminDashboard() {
     const newLeads = await db.findNewLeads()
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Neue Leads prüfen</h1>
-            <p className="text-muted-foreground">Folgende Leads warten auf Freigabe.</p>
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-bold">Neue Leads prüfen</h1>
+                    <p className="text-muted-foreground">Folgende Leads warten auf Freigabe.</p>
+                </div>
+                <SyncButton />
+            </div>
 
             <div className="grid gap-6">
                 {newLeads.length === 0 ? (

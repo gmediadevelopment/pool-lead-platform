@@ -31,6 +31,8 @@ export interface User {
 
 export interface Lead {
     id: string
+    externalId?: string
+    date?: Date
     firstName: string
     lastName: string
     email: string
@@ -141,6 +143,69 @@ export const db = {
              ORDER BY u.createdAt DESC`
         )
         return rows as (User & { purchasedLeadsCount: number })[]
+    },
+
+    async findLeadByExternalId(externalId: string): Promise<Lead | null> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM Lead WHERE externalId = ? LIMIT 1',
+            [externalId]
+        )
+        const leads = rows as Lead[]
+        return leads.length > 0 ? leads[0] : null
+    },
+
+    async createLeadFromSheet(lead: {
+        externalId: string
+        date?: Date
+        firstName?: string
+        lastName?: string
+        email?: string
+        phone?: string
+        zip?: string
+        city?: string
+        poolType?: string
+        dimensions?: string
+        features?: string
+        estimatedPrice?: number
+        timeline?: string
+        budgetConfirmed: boolean
+    }): Promise<string> {
+        const pool = getPool()
+        const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        const now = new Date()
+
+        await pool.execute(
+            `INSERT INTO Lead (
+                id, externalId, date, firstName, lastName, email, phone, zip, city,
+                poolType, dimensions, features, estimatedPrice, timeline, budgetConfirmed,
+                status, type, price, createdAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                leadId,
+                lead.externalId,
+                lead.date || null,
+                lead.firstName || null,
+                lead.lastName || null,
+                lead.email || null,
+                lead.phone || null,
+                lead.zip || null,
+                lead.city || null,
+                lead.poolType || null,
+                lead.dimensions || null,
+                lead.features || null,
+                lead.estimatedPrice || null,
+                lead.timeline || null,
+                lead.budgetConfirmed,
+                'NEW', // Always import as NEW for admin review
+                'INTEREST', // Default type
+                49.00, // Default price
+                now,
+                now
+            ]
+        )
+
+        return leadId
     },
 
     async testConnection(): Promise<boolean> {
