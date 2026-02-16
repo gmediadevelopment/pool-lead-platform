@@ -4,8 +4,10 @@ import bcrypt from "bcryptjs"
 import { Role } from "@prisma/client"
 
 export async function POST(req: Request) {
+    console.log("DEBUG: POST /api/register started")
     try {
         const body = await req.json()
+        console.log("DEBUG: Request body parsed", { email: body.email })
         const { email, password, companyName } = body
 
         if (!email || !password || !companyName) {
@@ -43,12 +45,14 @@ export async function POST(req: Request) {
             { status: 201 }
         )
     } catch (error: any) {
-        console.error("Registration error:", error)
+        console.error("DEBUG: Registration caught error:", error.message)
+        console.error("DEBUG: Stack trace:", error.stack)
         return NextResponse.json(
             {
                 message: "Interner Serverfehler",
                 error: error.message,
-                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                stack: error.stack,
+                type: error.constructor.name
             },
             { status: 500 }
         )
