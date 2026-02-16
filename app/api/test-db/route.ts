@@ -1,13 +1,25 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
 
 export async function GET() {
     try {
-        console.log("DEBUG: Test-DB starting")
-        const userCount = await prisma.user.count()
-        return NextResponse.json({ status: "ok", userCount })
+        const isConnected = await db.testConnection()
+
+        if (isConnected) {
+            return NextResponse.json({
+                message: 'Database connection successful (using mysql2 directly)',
+                status: 'connected'
+            })
+        } else {
+            return NextResponse.json({
+                message: 'Database connection failed',
+                status: 'disconnected'
+            }, { status: 500 })
+        }
     } catch (error: any) {
-        console.error("DEBUG: Test-DB error", error)
-        return NextResponse.json({ status: "error", error: error.message }, { status: 500 })
+        return NextResponse.json({
+            message: 'Database test error',
+            error: error.message
+        }, { status: 500 })
     }
 }

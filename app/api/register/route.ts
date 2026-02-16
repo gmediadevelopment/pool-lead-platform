@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import bcrypt from "bcryptjs"
-import { Role } from "@prisma/client"
 
 export async function POST(req: Request) {
     console.log("DEBUG: POST /api/register started")
@@ -17,29 +16,30 @@ export async function POST(req: Request) {
             )
         }
 
-        // Check if user exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        })
+        // Check if user exists (using direct MySQL2)
+        console.log("DEBUG: Checking for existing user...")
+        const existingUser = await db.findUserByEmail(email)
 
         if (existingUser) {
+            console.log("DEBUG: User already exists")
             return NextResponse.json(
                 { message: "Benutzer existiert bereits" },
                 { status: 409 }
             )
         }
 
+        console.log("DEBUG: Hashing password...")
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                companyName,
-                role: Role.COMPANY,
-            },
+        console.log("DEBUG: Creating user in database...")
+        const user = await db.createUser({
+            email,
+            password: hashedPassword,
+            companyName,
+            role: 'COMPANY',
         })
 
+        console.log("DEBUG: User created successfully:", user.id)
         return NextResponse.json(
             { message: "Benutzer erstellt", user: { id: user.id, email: user.email } },
             { status: 201 }
