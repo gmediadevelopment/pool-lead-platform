@@ -14,9 +14,21 @@ try {
 const logFile = path.join(__dirname, 'debug.log');
 const log = (msg) => {
     const entry = `[${new Date().toISOString()}] ${msg}\n`;
-    fs.appendFileSync(logFile, entry);
+    try {
+        fs.appendFileSync(logFile, entry);
+    } catch (e) { }
     console.log(msg);
 };
+
+process.on('uncaughtException', (err) => {
+    log(`UNCAUGHT EXCEPTION: ${err.message}\n${err.stack}`);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    log(`UNHANDLED REJECTION at: ${promise} reason: ${reason}`);
+});
+
 
 log('--- Server starting ---');
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
