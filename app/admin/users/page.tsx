@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import {
     Table,
@@ -11,16 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 
 export default async function UsersPage() {
-    const users = await prisma.user.findMany({
-        orderBy: {
-            createdAt: "desc",
-        },
-        include: {
-            _count: {
-                select: { purchasedLeads: true }
-            }
-        }
-    })
+    const users = await db.findAllUsersWithLeadCount()
 
     return (
         <div className="space-y-6">
@@ -53,7 +44,7 @@ export default async function UsersPage() {
                                             {user.role}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{user._count.purchasedLeads}</TableCell>
+                                    <TableCell>{user.purchasedLeadsCount}</TableCell>
                                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                                 </TableRow>
                             ))}

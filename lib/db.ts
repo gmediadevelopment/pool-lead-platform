@@ -131,6 +131,18 @@ export const db = {
         )
     },
 
+    async findAllUsersWithLeadCount(): Promise<(User & { purchasedLeadsCount: number })[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            `SELECT u.*, COUNT(pl.B) as purchasedLeadsCount
+             FROM User u
+             LEFT JOIN _PurchasedLeads pl ON u.id = pl.A
+             GROUP BY u.id
+             ORDER BY u.createdAt DESC`
+        )
+        return rows as (User & { purchasedLeadsCount: number })[]
+    },
+
     async testConnection(): Promise<boolean> {
         try {
             const pool = getPool()
