@@ -42,14 +42,8 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-// Force Prisma to use the binary engine instead of the library engine
-// This is often more stable on restricted hosting environments like Hostinger
-process.env.PRISMA_CLIENT_ENGINE_TYPE = 'binary';
-process.env.PRISMA_CLI_QUERY_ENGINE_TYPE = 'binary';
-
-log('--- Server starting (v1.3 - Binary Engine Test) ---');
+log('--- Server starting (v1.4 - EL9 Engine Test) ---');
 log(`Startup time: ${new Date().toISOString()}`);
-log(`Prisma Engine Type: ${process.env.PRISMA_CLIENT_ENGINE_TYPE}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
 if (process.env.DATABASE_URL) {
