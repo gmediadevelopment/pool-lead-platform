@@ -42,12 +42,13 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 
-log('--- Server starting (v1.7 - Direct MySQL & EL9 Target) ---');
+log('--- Server starting (v1.8 - IPv4 Force Test) ---');
 log(`Startup time: ${new Date().toISOString()}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
 log(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
 if (process.env.DATABASE_URL) {
-    log(`DATABASE_URL starts with: ${process.env.DATABASE_URL.substring(0, 15)}...`);
+    const masked = process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@');
+    log(`DATABASE_URL (masked): ${masked}`);
 }
 log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
 
