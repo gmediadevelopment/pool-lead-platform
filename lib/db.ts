@@ -42,6 +42,7 @@ export interface Lead {
     features?: string
     estimatedPrice: number
     timeline: string
+    budgetConfirmed: boolean
     type: string
     status: string
     price: number
