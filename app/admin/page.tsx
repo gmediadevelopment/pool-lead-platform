@@ -67,10 +67,10 @@ export default async function AdminDashboard() {
                                             <p>Keine Angabe</p>
                                         )}
                                     </div>
-                                    {(lead.timeline || lead.budgetConfirmed) && (
+                                    {((lead.timeline && lead.timeline !== '') || lead.budgetConfirmed) && (
                                         <div>
                                             <p className="font-semibold">Beratung</p>
-                                            {lead.timeline && <p>Bauzeitraum: {lead.timeline}</p>}
+                                            {lead.timeline && lead.timeline !== '' && <p>Bauzeitraum: {lead.timeline}</p>}
                                             {lead.budgetConfirmed && <p className="text-green-600">✓ Budget bestätigt</p>}
                                         </div>
                                     )}
