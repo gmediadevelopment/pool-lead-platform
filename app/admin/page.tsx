@@ -54,10 +54,26 @@ export default async function AdminDashboard() {
                                         <p>{lead.features || "-"}</p>
                                     </div>
                                     <div>
-                                        <p className="font-semibold">Budget & Zeit</p>
-                                        <p>{Number(lead.estimatedPrice).toLocaleString()} € {lead.budgetConfirmed ? "(Bestätigt)" : ""}</p>
-                                        <p>{lead.timeline}</p>
+                                        <p className="font-semibold">Budget</p>
+                                        {lead.estimatedPriceMin && lead.estimatedPriceMax ? (
+                                            lead.estimatedPriceMin === lead.estimatedPriceMax ? (
+                                                <p>{lead.estimatedPriceMin.toLocaleString()} €</p>
+                                            ) : (
+                                                <p>{lead.estimatedPriceMin.toLocaleString()} € - {lead.estimatedPriceMax.toLocaleString()} €</p>
+                                            )
+                                        ) : lead.estimatedPrice ? (
+                                            <p>{Number(lead.estimatedPrice).toLocaleString()} €</p>
+                                        ) : (
+                                            <p>Keine Angabe</p>
+                                        )}
                                     </div>
+                                    {(lead.timeline || lead.budgetConfirmed) && (
+                                        <div>
+                                            <p className="font-semibold">Beratung</p>
+                                            {lead.timeline && <p>Bauzeitraum: {lead.timeline}</p>}
+                                            {lead.budgetConfirmed && <p className="text-green-600">✓ Budget bestätigt</p>}
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                             <CardFooter className="flex justify-end gap-2 bg-muted/50 p-4">

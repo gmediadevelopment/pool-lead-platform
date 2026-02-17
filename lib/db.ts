@@ -174,16 +174,16 @@ export const db = {
         estimatedPriceMax?: number
         timeline?: string
         budgetConfirmed?: boolean
+        isConsultationLead?: boolean
     }): Promise<string> {
         const pool = getPool()
         const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         const now = new Date()
 
-        // Determine lead type and price
-        // Beratungs-Lead (99€) if timeline OR budgetConfirmed is filled
+        // Determine lead price based on type from Google Sheets Status column
+        // Beratungs-Lead (99€) if isConsultationLead is true
         // Otherwise Konfigurator-Lead (49€)
-        const isConsultationLead = !!(lead.timeline || lead.budgetConfirmed)
-        const leadPrice = isConsultationLead ? 99.00 : 49.00
+        const leadPrice = lead.isConsultationLead ? 99.00 : 49.00
 
         await pool.execute(
             `INSERT INTO \`Lead\` (

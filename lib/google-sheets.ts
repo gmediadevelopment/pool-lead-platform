@@ -71,7 +71,8 @@ export interface LeadFromSheet {
     estimatedPriceMin?: number
     estimatedPriceMax?: number
     timeline?: string
-    budgetConfirmed: boolean
+    budgetConfirmed?: boolean
+    isConsultationLead?: boolean
 }
 
 // Map sheet row to Lead object
@@ -153,6 +154,11 @@ export async function mapSheetRowToLead(row: any[], rowIndex: number): Promise<L
         budgetBestatigt === '1' ||
         budgetBestatigt === 'true'
 
+    // Determine lead type from Status column
+    // "Beratung angefragt" = Consultation lead (99€)
+    // "Interessent (Nur Berechnung)" = Interest only lead (49€)
+    const isConsultationLead = status?.toLowerCase().includes('beratung') || false
+
     return {
         externalId: `row_${rowIndex}`,
         date: parsedDate,
@@ -170,6 +176,7 @@ export async function mapSheetRowToLead(row: any[], rowIndex: number): Promise<L
         estimatedPriceMax: parsedPriceMax,
         timeline: bauzeitraum || undefined,
         budgetConfirmed,
+        isConsultationLead,
     }
 }
 
