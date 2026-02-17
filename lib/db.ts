@@ -131,7 +131,7 @@ export const db = {
         const pool = getPool()
         const [rows] = await pool.execute(
             'SELECT * FROM `Lead` WHERE status = ? ORDER BY createdAt DESC',
-            ['VERIFIED']
+            ['PUBLISHED']
         )
         return rows as Lead[]
     },
@@ -291,7 +291,7 @@ export const db = {
         const pool = getPool()
         const [rows] = await pool.execute(
             'SELECT COUNT(*) as count FROM `Lead` WHERE status = ?',
-            ['VERIFIED']
+            ['PUBLISHED']
         )
         const result = rows as { count: number }[]
         return result[0]?.count || 0
