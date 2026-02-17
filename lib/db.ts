@@ -121,10 +121,63 @@ export const db = {
     async findNewLeads(): Promise<Lead[]> {
         const pool = getPool()
         const [rows] = await pool.execute(
-            'SELECT * FROM Lead WHERE status = ? ORDER BY createdAt DESC',
+            'SELECT * FROM `Lead` WHERE status = ? ORDER BY createdAt DESC',
             ['NEW']
         )
         return rows as Lead[]
+    },
+
+    async findVerifiedLeads(): Promise<Lead[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM `Lead` WHERE status = ? ORDER BY createdAt DESC',
+            ['VERIFIED']
+        )
+        return rows as Lead[]
+    },
+
+    async updateLead(id: string, data: Partial<Lead>): Promise<void> {
+        const pool = getPool()
+        const updates: string[] = []
+        const values: any[] = []
+
+        // Build dynamic UPDATE query based on provided fields
+        const allowedFields = [
+            'firstName', 'lastName', 'email', 'phone', 'zip', 'city',
+            'poolType', 'dimensions', 'features',
+            'estimatedPrice', 'estimatedPriceMin', 'estimatedPriceMax',
+            'timeline', 'budgetConfirmed', 'price'
+        ]
+
+        for (const field of allowedFields) {
+            if (field in data) {
+                updates.push(`${field} = ?`)
+                values.push(data[field as keyof Lead])
+            }
+        }
+
+        if (updates.length === 0) return
+
+        values.push(new Date()) // updatedAt
+        values.push(id)
+
+        await pool.execute(
+            `UPDATE \`Lead\` SET ${updates.join(', ')}, updatedAt = ? WHERE id = ?`,
+            values
+        )
+    },
+
+    async deleteLead(id: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute('DELETE FROM `Lead` WHERE id = ?', [id])
+    },
+
+    async unpublishLead(id: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute(
+            'UPDATE `Lead` SET status = ?, updatedAt = ? WHERE id = ?',
+            ['NEW', new Date(), id]
+        )
     },
 
     async updateLeadStatus(leadId: string, status: string): Promise<void> {

@@ -22,6 +22,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <nav className="flex-1 px-4 space-y-2">
                     <Link href="/admin" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded transition-colors">
                         <FileText className="h-5 w-5" />
+                        Neue Leads prüfen
+                    </Link>
+                    <Link href="/admin/leads" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded transition-colors">
+                        <FileText className="h-5 w-5" />
                         Leads verwalten
                     </Link>
                     <Link href="/admin/users" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded transition-colors">
