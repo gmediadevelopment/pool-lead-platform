@@ -222,6 +222,7 @@ export const db = {
         return leadId
     },
 
+
     async testConnection(): Promise<boolean> {
         try {
             const pool = getPool()
@@ -231,6 +232,30 @@ export const db = {
             console.error('Database connection test failed:', error)
             return false
         }
-    }
+    },
+
+    async countAvailableLeads(): Promise<number> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT COUNT(*) as count FROM `Lead` WHERE status = ?',
+            ['VERIFIED']
+        )
+        const result = rows as { count: number }[]
+        return result[0]?.count || 0
+    },
+
+    async countPurchasedLeadsThisMonth(): Promise<number> {
+        const pool = getPool()
+        const firstDayOfMonth = new Date()
+        firstDayOfMonth.setDate(1)
+        firstDayOfMonth.setHours(0, 0, 0, 0)
+
+        const [rows] = await pool.execute(
+            'SELECT COUNT(*) as count FROM _PurchasedLeads WHERE createdAt >= ?',
+            [firstDayOfMonth]
+        )
+        const result = rows as { count: number }[]
+        return result[0]?.count || 0
+    },
 }
 
