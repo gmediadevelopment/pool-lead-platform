@@ -28,6 +28,19 @@ try {
     }
     if (!loaded) dotenv.config();
 
+    // Load Google Sheets credentials from JSON file if not already set
+    if (!process.env.GOOGLE_SHEETS_CREDENTIALS && !process.env.GOOGLE_CLIENT_EMAIL) {
+        const credentialsPath = path.join(__dirname, 'google-sheets-credentials.json');
+        if (fs.existsSync(credentialsPath)) {
+            const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+            process.env.GOOGLE_CLIENT_EMAIL = credentials.client_email;
+            process.env.GOOGLE_PRIVATE_KEY = credentials.private_key;
+            process.env.GOOGLE_SHEETS_SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || '1uauVteOX5d9nK0nEaJ_wfw_jinRZCZFSrtB0Ge--nJE';
+            process.env.GOOGLE_SHEETS_RANGE = process.env.GOOGLE_SHEETS_RANGE || 'Sheet1!A:Z';
+            console.log('Google Sheets credentials loaded from google-sheets-credentials.json');
+        }
+    }
+
     if (forceIpv4()) {
         console.log('DATABASE_URL hostname forced to 127.0.0.1 (IPv4)');
     }
