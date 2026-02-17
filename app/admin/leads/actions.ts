@@ -35,10 +35,8 @@ export async function deleteLeadAction(leadId: string) {
     try {
         await db.deleteLead(leadId)
         revalidatePath('/admin/leads')
-        return { success: true }
     } catch (error) {
         console.error('Failed to delete lead:', error)
-        return { success: false, error: 'Fehler beim Löschen des Leads' }
     }
 }
 
@@ -47,9 +45,7 @@ export async function unpublishLeadAction(leadId: string) {
         await db.unpublishLead(leadId)
         revalidatePath('/admin/leads')
         revalidatePath('/admin')
-        return { success: true }
     } catch (error) {
         console.error('Failed to unpublish lead:', error)
-        return { success: false, error: 'Fehler beim Zurückziehen des Leads' }
     }
 }
