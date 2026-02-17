@@ -2,14 +2,34 @@ import { google } from 'googleapis'
 
 // Initialize Google Sheets API
 function getGoogleSheetsClient() {
-    const credentials = process.env.GOOGLE_SHEETS_CREDENTIALS
-    if (!credentials) {
-        throw new Error('GOOGLE_SHEETS_CREDENTIALS environment variable is not set')
-    }
+    // Try to use base64 encoded credentials first
+    const credentialsBase64 = process.env.GOOGLE_SHEETS_CREDENTIALS
 
-    // Decode base64 credentials
-    const decodedCredentials = Buffer.from(credentials, 'base64').toString('utf-8')
-    const credentialsJson = JSON.parse(decodedCredentials)
+    let credentialsJson: any
+
+    if (credentialsBase64) {
+        // Decode base64 credentials
+        try {
+            const decodedCredentials = Buffer.from(credentialsBase64, 'base64').toString('utf-8')
+            credentialsJson = JSON.parse(decodedCredentials)
+        } catch (error) {
+            throw new Error('Failed to decode GOOGLE_SHEETS_CREDENTIALS: ' + error)
+        }
+    } else {
+        // Fallback: use individual environment variables
+        const clientEmail = process.env.GOOGLE_CLIENT_EMAIL
+        const privateKey = process.env.GOOGLE_PRIVATE_KEY
+
+        if (!clientEmail || !privateKey) {
+            throw new Error('Either GOOGLE_SHEETS_CREDENTIALS or GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY must be set')
+        }
+
+        credentialsJson = {
+            type: 'service_account',
+            client_email: clientEmail,
+            private_key: privateKey.replace(/\\n/g, '\n'), // Handle escaped newlines
+        }
+    }
 
     const auth = new google.auth.GoogleAuth({
         credentials: credentialsJson,
