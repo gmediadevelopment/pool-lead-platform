@@ -176,7 +176,7 @@ export const db = {
         const now = new Date()
 
         await pool.execute(
-            `INSERT INTO Lead (
+            `INSERT INTO \`Lead\` (
                 id, externalId, date, firstName, lastName, email, phone, zip, city,
                 poolType, dimensions, features, estimatedPrice, timeline, budgetConfirmed,
                 status, type, price, createdAt, updatedAt
