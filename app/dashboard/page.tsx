@@ -1,7 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, ShoppingCart, CreditCard, Activity } from "lucide-react"
+import { db } from "@/lib/db"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    // Fetch real statistics
+    const availableLeads = await db.countAvailableLeads()
+    const purchasedLeads = await db.countPurchasedLeadsThisMonth()
+
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
@@ -14,8 +19,8 @@ export default function DashboardPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-muted-foreground">+2 seit gestern</p>
+                        <div className="text-2xl font-bold">{availableLeads}</div>
+                        <p className="text-xs text-muted-foreground">Aktuell verfügbar</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -24,7 +29,7 @@ export default function DashboardPage() {
                         <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">4</div>
+                        <div className="text-2xl font-bold">{purchasedLeads}</div>
                         <p className="text-xs text-muted-foreground">Diesen Monat</p>
                     </CardContent>
                 </Card>
@@ -44,8 +49,8 @@ export default function DashboardPage() {
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">Hoch</div>
-                        <p className="text-xs text-muted-foreground">In Ihrer Region</p>
+                        <div className="text-2xl font-bold">{availableLeads > 5 ? 'Hoch' : 'Niedrig'}</div>
+                        <p className="text-xs text-muted-foreground">Verfügbare Leads</p>
                     </CardContent>
                 </Card>
             </div>
