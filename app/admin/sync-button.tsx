@@ -48,6 +48,16 @@ export function SyncButton() {
                                 <li>Übersprungen: {result.summary.skipped}</li>
                                 {result.summary.errors > 0 && <li>Fehler: {result.summary.errors}</li>}
                             </ul>
+                            {result.errors && result.errors.length > 0 && (
+                                <div className="mt-3 border-t border-green-200 pt-3">
+                                    <p className="font-semibold text-sm">Fehler-Details:</p>
+                                    <ul className="mt-1 text-xs space-y-1 max-h-40 overflow-y-auto">
+                                        {result.errors.map((error: string, i: number) => (
+                                            <li key={i} className="text-red-700">• {error}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <p>❌ Fehler: {result.error}</p>
