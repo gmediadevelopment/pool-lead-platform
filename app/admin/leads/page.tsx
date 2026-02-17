@@ -1,10 +1,10 @@
 import { db } from "@/lib/db"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Pencil, Trash2, ArrowLeft } from "lucide-react"
 import { deleteLeadAction, unpublishLeadAction } from "./actions"
-import { EditLeadDialog } from "./edit-lead-dialog"
 
 export default async function ManageLeadsPage() {
     const leads = await db.findVerifiedLeads()
@@ -76,7 +76,12 @@ export default async function ManageLeadsPage() {
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-4 border-t">
-                                    <EditLeadDialog lead={lead} />
+                                    <Link href={`/admin/leads/${lead.id}/edit`}>
+                                        <Button variant="outline" size="sm">
+                                            <Pencil className="h-4 w-4 mr-1" />
+                                            Bearbeiten
+                                        </Button>
+                                    </Link>
 
                                     <form action={unpublishLeadAction.bind(null, lead.id)}>
                                         <Button variant="outline" size="sm" type="submit">

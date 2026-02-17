@@ -1,45 +1,34 @@
-'use client'
-
-import { useState } from 'react'
+import { db } from "@/lib/db"
+import { notFound, redirect } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Pencil } from "lucide-react"
-import { updateLeadAction } from "./actions"
-import type { Lead } from "@/lib/db"
+import Link from "next/link"
+import { updateLeadAction } from "../actions"
 
-export function EditLeadDialog({ lead }: { lead: Lead }) {
-    const [open, setOpen] = useState(false)
+export default async function EditLeadPage({ params }: { params: { id: string } }) {
+    const leads = await db.findVerifiedLeads()
+    const lead = leads.find(l => l.id === params.id)
+
+    if (!lead) {
+        notFound()
+    }
+
+    async function handleUpdate(formData: FormData) {
+        'use server'
+        await updateLeadAction(params.id, formData)
+        redirect('/admin/leads')
+    }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Bearbeiten
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Lead bearbeiten</DialogTitle>
-                    <DialogDescription>
-                        Ändern Sie die Lead-Daten und speichern Sie die Änderungen.
-                    </DialogDescription>
-                </DialogHeader>
-                <form action={async (formData: FormData) => {
-                    await updateLeadAction(lead.id, formData)
-                    setOpen(false)
-                }}>
-                    <div className="grid gap-4 py-4">
+        <div className="max-w-4xl">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Lead bearbeiten</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form action={handleUpdate} className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="firstName">Vorname</Label>
@@ -142,15 +131,18 @@ export function EditLeadDialog({ lead }: { lead: Lead }) {
                                 <option value="99">99€ (Beratung)</option>
                             </select>
                         </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                            Abbrechen
-                        </Button>
-                        <Button type="submit">Speichern</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+
+                        <div className="flex justify-end gap-2">
+                            <Link href="/admin/leads">
+                                <Button type="button" variant="outline">
+                                    Abbrechen
+                                </Button>
+                            </Link>
+                            <Button type="submit">Speichern</Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
     )
 }
