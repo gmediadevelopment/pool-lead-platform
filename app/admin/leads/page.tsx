@@ -37,7 +37,7 @@ export default async function ManageLeadsPage() {
                                     <div className="flex gap-2">
                                         <Badge variant="outline">{lead.poolType}</Badge>
                                         <Badge className={lead.price === 99 ? "bg-purple-600" : "bg-blue-600"}>
-                                            {lead.price}€
+                                            {lead.price.toFixed(0)}€
                                         </Badge>
                                     </div>
                                 </div>

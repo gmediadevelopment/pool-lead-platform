@@ -20,13 +20,6 @@ import type { Lead } from "@/lib/db"
 export function EditLeadDialog({ lead }: { lead: Lead }) {
     const [open, setOpen] = useState(false)
 
-    async function handleSubmit(formData: FormData) {
-        const result = await updateLeadAction(lead.id, formData)
-        if (result.success) {
-            setOpen(false)
-        }
-    }
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -42,7 +35,10 @@ export function EditLeadDialog({ lead }: { lead: Lead }) {
                         Ändern Sie die Lead-Daten und speichern Sie die Änderungen.
                     </DialogDescription>
                 </DialogHeader>
-                <form action={handleSubmit}>
+                <form action={async (formData: FormData) => {
+                    await updateLeadAction(lead.id, formData)
+                    setOpen(false)
+                }}>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
