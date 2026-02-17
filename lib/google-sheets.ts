@@ -68,6 +68,8 @@ export interface LeadFromSheet {
     dimensions?: string
     features?: string
     estimatedPrice?: number
+    estimatedPriceMin?: number
+    estimatedPriceMax?: number
     timeline?: string
     budgetConfirmed: boolean
 }
@@ -114,13 +116,34 @@ export async function mapSheetRowToLead(row: any[], rowIndex: number): Promise<L
         }
     }
 
-    // Parse price
+    // Parse price range (e.g., "41848€ - 46253€")
+    let parsedPriceMin: number | undefined
+    let parsedPriceMax: number | undefined
     let parsedPrice: number | undefined
+
     if (preisSchatzung) {
-        const priceStr = preisSchatzung.toString().replace(/[^0-9.,]/g, '').replace(',', '.')
-        const price = parseFloat(priceStr)
-        if (!isNaN(price)) {
-            parsedPrice = price
+        const priceStr = preisSchatzung.toString()
+
+        // Check if it's a range (contains "-")
+        if (priceStr.includes('-')) {
+            const parts = priceStr.split('-').map((p: string) => p.trim())
+            if (parts.length === 2) {
+                const min = parseFloat(parts[0].replace(/[^0-9.,]/g, '').replace(',', '.'))
+                const max = parseFloat(parts[1].replace(/[^0-9.,]/g, '').replace(',', '.'))
+
+                if (!isNaN(min)) parsedPriceMin = min
+                if (!isNaN(max)) parsedPriceMax = max
+                // Use min as the main estimatedPrice for compatibility
+                if (!isNaN(min)) parsedPrice = min
+            }
+        } else {
+            // Single value - use as both min and max
+            const price = parseFloat(priceStr.replace(/[^0-9.,]/g, '').replace(',', '.'))
+            if (!isNaN(price)) {
+                parsedPrice = price
+                parsedPriceMin = price
+                parsedPriceMax = price
+            }
         }
     }
 
@@ -143,6 +166,8 @@ export async function mapSheetRowToLead(row: any[], rowIndex: number): Promise<L
         dimensions: masse || undefined,
         features: extras || undefined,
         estimatedPrice: parsedPrice,
+        estimatedPriceMin: parsedPriceMin,
+        estimatedPriceMax: parsedPriceMax,
         timeline: bauzeitraum || undefined,
         budgetConfirmed,
     }

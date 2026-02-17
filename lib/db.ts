@@ -42,9 +42,11 @@ export interface Lead {
     poolType: string
     dimensions: string
     features?: string
-    estimatedPrice: number
-    timeline: string
-    budgetConfirmed: boolean
+    estimatedPrice?: number
+    estimatedPriceMin?: number
+    estimatedPriceMax?: number
+    timeline?: string
+    budgetConfirmed?: boolean
     type: string
     status: string
     price: number
@@ -168,19 +170,29 @@ export const db = {
         dimensions?: string
         features?: string
         estimatedPrice?: number
+        estimatedPriceMin?: number
+        estimatedPriceMax?: number
         timeline?: string
-        budgetConfirmed: boolean
+        budgetConfirmed?: boolean
     }): Promise<string> {
         const pool = getPool()
         const leadId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         const now = new Date()
 
+        // Determine lead type and price
+        // Beratungs-Lead (99€) if timeline OR budgetConfirmed is filled
+        // Otherwise Konfigurator-Lead (49€)
+        const isConsultationLead = !!(lead.timeline || lead.budgetConfirmed)
+        const leadPrice = isConsultationLead ? 99.00 : 49.00
+
         await pool.execute(
             `INSERT INTO \`Lead\` (
                 id, externalId, date, firstName, lastName, email, phone, zip, city,
-                poolType, dimensions, features, estimatedPrice, timeline, budgetConfirmed,
+                poolType, dimensions, features, 
+                estimatedPrice, estimatedPriceMin, estimatedPriceMax,
+                timeline, budgetConfirmed,
                 status, type, price, createdAt, updatedAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 leadId,
                 lead.externalId,
@@ -195,11 +207,13 @@ export const db = {
                 lead.dimensions || null,
                 lead.features || null,
                 lead.estimatedPrice || null,
+                lead.estimatedPriceMin || null,
+                lead.estimatedPriceMax || null,
                 lead.timeline || null,
-                lead.budgetConfirmed,
+                lead.budgetConfirmed || false,
                 'NEW', // Always import as NEW for admin review
                 'INTEREST', // Default type
-                49.00, // Default price
+                leadPrice, // Dynamic: 49€ for Konfigurator, 99€ for Beratung
                 now,
                 now
             ]
