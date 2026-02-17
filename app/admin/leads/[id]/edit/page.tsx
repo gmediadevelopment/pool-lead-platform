@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { updateLeadAction } from "../actions"
+import { updateLeadAction } from "../../actions"
 
 export default async function EditLeadPage({ params }: { params: { id: string } }) {
     const leads = await db.findVerifiedLeads()
