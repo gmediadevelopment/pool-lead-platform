@@ -1,8 +1,9 @@
 import Link from "next/link"
-import { ShieldCheck, LayoutDashboard, ShoppingCart, User, List } from "lucide-react"
+import { ShieldCheck, LayoutDashboard, ShoppingCart, User, List, Package } from "lucide-react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { CartIcon } from "@/components/cart/cart-icon"
 
 export default async function DashboardLayout({
     children,
@@ -49,6 +50,20 @@ export default async function DashboardLayout({
                     </Link>
                     <Link
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        href="/dashboard/cart"
+                    >
+                        <ShoppingCart className="h-4 w-4" />
+                        Warenkorb
+                    </Link>
+                    <Link
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        href="/dashboard/orders"
+                    >
+                        <Package className="h-4 w-4" />
+                        Bestellungen
+                    </Link>
+                    <Link
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
                         href="/dashboard/profile"
                     >
                         <User className="h-4 w-4" />
@@ -73,6 +88,7 @@ export default async function DashboardLayout({
                         <h1 className="font-semibold text-lg">Willkommen, {session.user?.name}</h1>
                     </div>
                     <div className="flex items-center gap-4">
+                        <CartIcon />
                         <span className="text-sm text-gray-500">{session.user?.email}</span>
                         {/* UserMenu could go here */}
                     </div>

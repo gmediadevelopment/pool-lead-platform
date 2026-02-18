@@ -317,7 +317,46 @@ export const db = {
         }
     },
 
+    async getPurchasedLeads(userId: string): Promise<Lead[]> {
+        const pool = getPool()
+        try {
+            const [rows] = await pool.execute(`
+                SELECT l.*
+                FROM Lead l
+                INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
+                WHERE pl.userId = ?
+                ORDER BY pl.createdAt DESC
+            `, [userId])
+            return rows as Lead[]
+        } catch (error) {
+            console.error('Error fetching purchased leads:', error)
+            return []
+        }
+    },
+
     // ==================== CART FUNCTIONS ====================
+
+    async purchaseLead(userId: string, leadId: string): Promise<void> {
+        const pool = getPool()
+        const now = new Date()
+        const id = `pl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+        try {
+            await pool.execute(
+                `INSERT INTO _PurchasedLeads (id, userId, leadId, createdAt)
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE createdAt = createdAt`,
+                [id, userId, leadId, now]
+            )
+        } catch (error) {
+            // If table has different structure, try without id column
+            await pool.execute(
+                `INSERT IGNORE INTO _PurchasedLeads (userId, leadId)
+                 VALUES (?, ?)`,
+                [userId, leadId]
+            )
+        }
+    },
 
     async addToCart(userId: string, leadId: string): Promise<void> {
         const pool = getPool()
@@ -440,6 +479,11 @@ export const db = {
             [orderId]
         ) as any
         return rows[0] || null
+    },
+
+    // Alias for getOrder
+    async getOrderById(orderId: string): Promise<any | null> {
+        return this.getOrder(orderId)
     },
 
     async getOrderItems(orderId: string): Promise<any[]> {
