@@ -50,3 +50,4 @@ google-sheets-credentials.json
 
 # Hostinger environment variables (contains secrets!)
 hostinger.env
+hostinger-import.env
