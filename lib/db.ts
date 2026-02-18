@@ -96,6 +96,87 @@ export const db = {
         }
     },
 
+    async createLeadFromWebhook(data: {
+        firstName: string
+        lastName: string
+        email: string
+        phone: string
+        zip: string
+        city: string
+        poolType: string
+        installation: string
+        dimensions: string
+        features: string
+        estimatedPrice?: number
+        estimatedPriceMin?: number
+        estimatedPriceMax?: number
+        timeline: string
+        budgetConfirmed: boolean
+        status: string
+        source: string
+    }): Promise<Lead> {
+        const pool = getPool()
+        const id = crypto.randomUUID()
+        const now = new Date()
+
+        // Calculate lead price based on estimated budget
+        const leadPrice = data.estimatedPriceMin
+            ? Math.round(data.estimatedPriceMin * 0.01) // 1% of min estimate
+            : 49 // default price
+
+        await pool.execute(
+            `INSERT INTO \`Lead\` (id, firstName, lastName, email, phone, zip, city, poolType, dimensions, features,
+             estimatedPrice, estimatedPriceMin, estimatedPriceMax, timeline, budgetConfirmed,
+             type, status, price, createdAt, updatedAt)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                id,
+                data.firstName,
+                data.lastName,
+                data.email,
+                data.phone,
+                data.zip,
+                data.city,
+                `${data.poolType}${data.installation ? ' / ' + data.installation : ''}`,
+                data.dimensions,
+                data.features,
+                data.estimatedPrice || null,
+                data.estimatedPriceMin || null,
+                data.estimatedPriceMax || null,
+                data.timeline,
+                data.budgetConfirmed ? 1 : 0,
+                'POOL',
+                'NEW',
+                leadPrice,
+                now,
+                now,
+            ]
+        )
+
+        return {
+            id,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            zip: data.zip,
+            city: data.city,
+            poolType: data.poolType,
+            dimensions: data.dimensions,
+            features: data.features,
+            estimatedPrice: data.estimatedPrice,
+            estimatedPriceMin: data.estimatedPriceMin,
+            estimatedPriceMax: data.estimatedPriceMax,
+            timeline: data.timeline,
+            budgetConfirmed: data.budgetConfirmed,
+            type: 'POOL',
+            status: 'NEW',
+            price: leadPrice,
+            createdAt: now,
+            updatedAt: now,
+        }
+    },
+
     async findPublishedLeads(): Promise<Lead[]> {
         const pool = getPool()
         const [rows] = await pool.execute(
