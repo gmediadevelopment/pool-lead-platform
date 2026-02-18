@@ -48,41 +48,14 @@ try {
     console.log('dotenv loading issue:', e.message);
 }
 
-// Hardcoded fallback variables for Hostinger (used when no .env.local exists after build)
-if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = 'mysql://u328068506_admin:ao3957vabzikuikhfSFAIJFG@127.0.0.1:3306/u328068506_main';
-}
-if (!process.env.NEXTAUTH_SECRET) {
-    process.env.NEXTAUTH_SECRET = '7xK9mP2nQ5vL8wR3tY6uI1oA4sD7fG0hJ2kL5zX8cV9b';
-}
-if (!process.env.NEXTAUTH_URL) {
-    process.env.NEXTAUTH_URL = 'https://marktplatz.poolbau-vergleich.de';
-}
-if (!process.env.STRIPE_PUBLIC_KEY) {
-    process.env.STRIPE_PUBLIC_KEY = 'pk_test_51T2AYB2XUA5NPEWSuEk5R9azHVg9uoIBHJhrIMghcRxfhn2Qw3KI1sUDh3PzXi9GOPGS7HkTJJnVbQVU7GRu5W6N0018R22Mwa';
-}
-if (!process.env.STRIPE_SECRET_KEY) {
-    process.env.STRIPE_SECRET_KEY = 'sk_test_51T2AYB2XUA5NPEWSXPHrHDT9MsbNb40XA7ka8nP0KcIGKY7BF49AV8QbNYa9DYvut41rWYy0eM3aBVksxIhSjm4C00v4sR11vu';
-}
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_yK8TZEDtTDnjOcHA6QNXPmMv0yVkWtbp';
-}
-if (!process.env.GOOGLE_CLIENT_EMAIL) {
-    process.env.GOOGLE_CLIENT_EMAIL = 'pool-lead-sheets-sync@pool-lead-platform.iam.gserviceaccount.com';
-}
-if (!process.env.GOOGLE_SHEETS_SPREADSHEET_ID) {
-    process.env.GOOGLE_SHEETS_SPREADSHEET_ID = '1uauVteOX5d9nK0nEaJ_wfw_jinRZCZFSrtB0Ge--nJE';
-}
-if (!process.env.GOOGLE_SHEETS_RANGE) {
-    process.env.GOOGLE_SHEETS_RANGE = 'Leads!A:Z';
-}
-if (!process.env.CRON_SECRET) {
-    process.env.CRON_SECRET = '2a3c46054d7dd4197bcc3cc0c31510e1a46ec2b7828d9d3fc2e7843993830866';
-}
-if (!process.env.GOOGLE_PRIVATE_KEY) {
-    process.env.GOOGLE_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDOEtyqqPd4IBAC\nGTf/AQ5oS+4ohbQKMBUICkWdNsz4BMLtg0eTVJeVgcjL5qGUbz6UEW//KsnRu2DN\nrnR+oovqhrRjorTFP7YhESMd+pWhNQ2A6bnUK8dIb7bsRfdzRzFETs56noILURIo\njY3pqPJD74L+aiSYbdr60Ts9SlG9lwked8SUoxzFzYnWBvbAqMJ7WkPSodh+2A/I\nZQJvLcHXxoG3Bhl9lQkvtDoa+bLFFRHc7P3P2DYXcYLRdTqGy/scobl0DLuqkzM3\nyqBEp3uYhW7KcOtR0sHxyOrc7+eYssMOitWb3ouoJq+7981lt0GkNRb5htyY7Zil\n8zVkrk0lAgMBAAECggEAL7ohnmr8ybcPThUeKXLKrfAsC/mPba6eKFsMrXE0PpsH\ntG+rw50bcHZ7FXJoaNLs+Oki+cOks20E6g4mD/BAnIQvQkY8PNTZL0ZjTj2rqwb5\nBirbrZ6oDIhHIui/e1T5PZtM6gxNDSbtIDRMslm9JmvR+G+H4z/KMD4GTNcqIFDw\npdmnnJvmh/ZWjkjyxPsSzZ6ZBy7f/lZmPOV7YRSQckdzrZtsGpR9noDnGIXYOVhT\naA77/RTxwZG5yAOiZIwtMT+/V9HpeYfnGwSuB3/p+jj3oHJjegcNPobOQr9Gs7mr\n0Rz5R94+o8Czz2nsYYTS8MMmvoG8RPk3jDVAAxDkEQKBgQD0K7JLuNis9kNfxcCX\nB1qIiU2sdybgmiUZ6G7ELXz+DdrrszCX+Wpv8dRSMmsbGL4nEMUypbq/QtY/Jk3m\nyH0wu5C06Yzw0/miw2YQUJnRSAD6PWEgTKKXQp83+8TWE04c/WC84TKQZQJta7s+\nxYCuTJzCYlE1o9By7F27oTpO+QKBgQDYDqvHByCtsbkPT+SrIfyfwO3B/WDbWkGy\nILK7hwks/AFk979zOxN/T3T/01uEp1RZbFvOtIspwuF0XW/LFXhLKz1h0Sv0gbCz\nuyyoxumfhJveJnc94P5KHNU800uct0BGy3x67Oxq8t7p3/KNgVYqi0d7u+Bj3HS/\nshCpMZS+jQKBgQDWXm7A8F67K9JnCTVW44vmh7V8D3hAhNTB9EEbV1x/qCZl/QJS\nyxVZhxWDvOQv+/8mSSD4oGxecw2qj7ShQ7A10tbvHoUxAsoOzkKTXFBPX0oMaUsW\nknHFHyaufgqIcJaJ+SKvcX91KlmBO64/JCMf4/9U4gCueU4PN9nrW1fX8QKBgFkZ\nu8eJbfWTrGDfLstQadEsDCELMC1lzF/8Uhk5+BPAHYcZELAhtcmz5+k0rbJIG2YB\nZN8a36UqRDXr7pWO1hwRye+UBo+ACHImh6VW2rO5SVpU/KndJqFDwMCj1rPbcrt/\nYWeEW39Dh6Blha7LntBOvf0OHtyv5snDUlGkK9ZlAoGAbrGCLbjzlHe3xTuICSOd\nUIZIQcKHC3fGb3dr4HQ+Vk5NNzNQ1PQ1wK56DsCsvr7wQeKMr8Fw47srspKwmwWV\nW0IBceEgYQs1p5p6Q+fisjJobWpXbGVgNCoT9XWr/k3ksHrA+PpSOVxXUhLLJbyP\nszjWdVxXMyY2rBRbZD6q0r0=\n-----END PRIVATE KEY-----';
-}
 
+// NOTE: Environment variables are loaded from .env.local via dotenv above.
+// After each Hostinger build, recreate .env.local via SSH:
+//   cat > /home/u328068506/domains/marktplatz.poolbau-vergleich.de/public_html/.env.local << 'EOF'
+//   DATABASE_URL=...
+//   NEXTAUTH_SECRET=...
+//   ... etc
+//   EOF
 
 const logFile = path.join(__dirname, 'debug.log');
 const log = (msg) => {
