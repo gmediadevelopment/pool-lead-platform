@@ -16,7 +16,7 @@ function forceIpv4() {
 // Try to load .env manually just in case
 try {
     const dotenv = require('dotenv');
-    const envPaths = [path.join(__dirname, '.env'), path.join(__dirname, 'hostinger.env')];
+    const envPaths = [path.join(__dirname, '.env.local'), path.join(__dirname, '.env'), path.join(__dirname, 'hostinger.env')];
     let loaded = false;
     for (const envPath of envPaths) {
         if (fs.existsSync(envPath)) {
