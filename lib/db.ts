@@ -177,6 +177,43 @@ export const db = {
         }
     },
 
+    async findLeadByEmail(email: string): Promise<Lead | null> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM `Lead` WHERE email = ? ORDER BY createdAt DESC LIMIT 1',
+            [email]
+        )
+        const leads = rows as Lead[]
+        return leads.length > 0 ? leads[0] : null
+    },
+
+    async updateLeadStatus(
+        id: string,
+        status: string,
+        extra?: { timeline?: string; budgetConfirmed?: boolean }
+    ): Promise<void> {
+        const pool = getPool()
+        const now = new Date()
+
+        if (extra && (extra.timeline !== undefined || extra.budgetConfirmed !== undefined)) {
+            await pool.execute(
+                'UPDATE `Lead` SET status = ?, timeline = COALESCE(?, timeline), budgetConfirmed = COALESCE(?, budgetConfirmed), updatedAt = ? WHERE id = ?',
+                [
+                    status,
+                    extra.timeline ?? null,
+                    extra.budgetConfirmed !== undefined ? (extra.budgetConfirmed ? 1 : 0) : null,
+                    now,
+                    id,
+                ]
+            )
+        } else {
+            await pool.execute(
+                'UPDATE `Lead` SET status = ?, updatedAt = ? WHERE id = ?',
+                [status, now, id]
+            )
+        }
+    },
+
     async findPublishedLeads(): Promise<Lead[]> {
         const pool = getPool()
         const [rows] = await pool.execute(
@@ -261,13 +298,6 @@ export const db = {
         )
     },
 
-    async updateLeadStatus(leadId: string, status: string): Promise<void> {
-        const pool = getPool()
-        await pool.execute(
-            'UPDATE Lead SET status = ?, updatedAt = ? WHERE id = ?',
-            [status, new Date(), leadId]
-        )
-    },
 
     async findAllUsersWithLeadCount(): Promise<(User & { purchasedLeadsCount: number })[]> {
         const pool = getPool()

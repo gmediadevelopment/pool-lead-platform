@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // Webhook endpoint for WordPress PoolbauVergleich Planer plugin
-// Secured with WEBHOOK_SECRET environment variable
+// Two events from WordPress:
+//   1. status = 'Interessent (Nur Berechnung)' → Create new lead (NEW)
+//   2. status = 'Beratung angefragt'           → Update existing lead by email (CONSULTATION_REQUESTED)
 
 export async function POST(request: NextRequest) {
     try {
@@ -19,7 +21,6 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json()
 
-        // Extract fields from WordPress plugin payload
         const {
             firstName,
             lastName,
@@ -44,13 +45,15 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Parse price estimate (format: "12000€ - 15000€")
+        const normalizedEmail = email.trim().toLowerCase()
+
+        // Parse price estimate (format: "12.000€ - 15.000€" or "12000€ - 15000€")
         let estimatedPriceMin: number | undefined
         let estimatedPriceMax: number | undefined
         let estimatedPrice: number | undefined
 
         if (priceEstimate) {
-            const matches = priceEstimate.match(/(\d+)/g)
+            const matches = priceEstimate.replace(/\./g, '').match(/(\d+)/g)
             if (matches && matches.length >= 2) {
                 estimatedPriceMin = parseInt(matches[0])
                 estimatedPriceMax = parseInt(matches[1])
@@ -58,21 +61,42 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Map status from WordPress to our system
-        const statusMap: Record<string, string> = {
-            'Interessent (Nur Berechnung)': 'pending',
-            'Beratung angefragt': 'pending',
-        }
-        const mappedStatus = statusMap[leadStatus] || 'pending'
+        const isConsultationRequest = leadStatus === 'Beratung angefragt'
 
-        // Create lead in database
+        if (isConsultationRequest) {
+            // Try to find existing lead by email and update it
+            const existingLead = await db.findLeadByEmail(normalizedEmail)
+
+            if (existingLead) {
+                // Update existing lead: mark as consultation requested
+                await db.updateLeadStatus(existingLead.id, 'CONSULTATION_REQUESTED', {
+                    timeline: timeframe || existingLead.timeline,
+                    budgetConfirmed: budgetConfirmed === 'yes',
+                })
+
+                return NextResponse.json({
+                    success: true,
+                    leadId: existingLead.id,
+                    action: 'updated',
+                    message: 'Lead updated to consultation requested',
+                })
+            }
+            // If no existing lead found, fall through and create new one
+        }
+
+        // Calculate lead price based on estimated budget
+        const leadPrice = estimatedPriceMin
+            ? Math.round(estimatedPriceMin * 0.01) // 1% of min estimate
+            : 49 // default price
+
+        // Create new lead
         const lead = await db.createLeadFromWebhook({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
-            email: email.trim().toLowerCase(),
+            email: normalizedEmail,
             phone: phone?.trim() || '',
             zip: zip.trim(),
-            city: '', // Will be enriched later if needed
+            city: '',
             poolType: poolType || 'Unbekannt',
             installation: installation || '',
             dimensions: dimensions || '',
@@ -82,14 +106,16 @@ export async function POST(request: NextRequest) {
             estimatedPriceMax,
             timeline: timeframe || '',
             budgetConfirmed: budgetConfirmed === 'yes',
-            status: mappedStatus,
+            // If consultation was requested directly (no prior lead), mark accordingly
+            status: isConsultationRequest ? 'CONSULTATION_REQUESTED' : 'NEW',
             source: 'wordpress_planer',
         })
 
         return NextResponse.json({
             success: true,
             leadId: lead.id,
-            message: 'Lead successfully created',
+            action: 'created',
+            message: isConsultationRequest ? 'Lead created with consultation request' : 'Lead created',
         })
     } catch (error) {
         console.error('Webhook error:', error)
@@ -103,7 +129,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// Allow GET for health check
 export async function GET() {
     return NextResponse.json({
         status: 'ok',
