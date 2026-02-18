@@ -4,9 +4,15 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-02-24.acacia'
-})
+// Lazy initialization - only create Stripe instance at request time, not build time
+function getStripe() {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('STRIPE_SECRET_KEY is not configured')
+    }
+    return new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-02-24.acacia'
+    })
+}
 
 const TAX_RATE = 0.19 // 19% MwSt
 
@@ -76,6 +82,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create Stripe Checkout Session
+        const stripe = getStripe()
         const checkoutSession = await stripe.checkout.sessions.create({
             mode: 'payment',
             line_items: lineItems,

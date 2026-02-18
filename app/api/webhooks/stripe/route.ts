@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-02-24.acacia'
-})
+// Lazy initialization - only create Stripe instance at request time, not build time
+function getStripe() {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('STRIPE_SECRET_KEY is not configured')
+    }
+    return new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-02-24.acacia'
+    })
+}
 
 // POST /api/webhooks/stripe - Handle Stripe webhook events
 export async function POST(request: NextRequest) {
@@ -18,6 +24,7 @@ export async function POST(request: NextRequest) {
     let event: Stripe.Event
 
     try {
+        const stripe = getStripe()
         event = stripe.webhooks.constructEvent(
             body,
             signature,
