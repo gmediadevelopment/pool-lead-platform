@@ -300,18 +300,12 @@ export const db = {
     async countPurchasedLeadsThisMonth(): Promise<number> {
         try {
             const pool = getPool()
-            const firstDayOfMonth = new Date()
-            firstDayOfMonth.setDate(1)
-            firstDayOfMonth.setHours(0, 0, 0, 0)
-
             const [rows] = await pool.execute(
-                'SELECT COUNT(*) as count FROM _PurchasedLeads WHERE createdAt >= ?',
-                [firstDayOfMonth]
+                'SELECT COUNT(*) as count FROM _PurchasedLeads'
             )
             const result = rows as { count: number }[]
             return result[0]?.count || 0
         } catch (error) {
-            // Table might not exist yet, return 0
             console.error('Error counting purchased leads:', error)
             return 0
         }
