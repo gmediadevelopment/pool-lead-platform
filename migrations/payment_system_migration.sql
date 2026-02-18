@@ -1,11 +1,10 @@
 -- ============================================
--- Payment System Database Migration
--- Created: 2026-02-17 (Fixed: 2026-02-18)
--- Description: Creates tables for shopping cart, orders, and payment tracking
--- NOTE: Lead and User are escaped with backticks (reserved words in MySQL)
+-- Payment System Database Migration (Hostinger-kompatibel)
+-- Erstellt: 2026-02-18
+-- ANLEITUNG: Führe jeden Abschnitt EINZELN aus falls Fehler auftreten
 -- ============================================
 
--- 1. Create Cart table
+-- SCHRITT 1: Cart Tabelle erstellen
 CREATE TABLE IF NOT EXISTS `Cart` (
     id VARCHAR(255) PRIMARY KEY,
     userId VARCHAR(255) NOT NULL,
@@ -18,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `Cart` (
     INDEX idx_cart_lead (leadId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Create Order table
+-- SCHRITT 2: Order Tabelle erstellen
 CREATE TABLE IF NOT EXISTS `Order` (
     id VARCHAR(255) PRIMARY KEY,
     userId VARCHAR(255) NOT NULL,
@@ -36,11 +35,10 @@ CREATE TABLE IF NOT EXISTS `Order` (
     FOREIGN KEY (userId) REFERENCES `User`(id) ON DELETE CASCADE,
     INDEX idx_order_user (userId),
     INDEX idx_order_status (status),
-    INDEX idx_order_created (createdAt),
-    INDEX idx_order_invoice (invoiceNumber)
+    INDEX idx_order_created (createdAt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Create OrderItem table
+-- SCHRITT 3: OrderItem Tabelle erstellen
 CREATE TABLE IF NOT EXISTS `OrderItem` (
     id VARCHAR(255) PRIMARY KEY,
     orderId VARCHAR(255) NOT NULL,
@@ -52,69 +50,21 @@ CREATE TABLE IF NOT EXISTS `OrderItem` (
     INDEX idx_item_lead (leadId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Update _PurchasedLeads table
--- Add orderId column if it doesn't exist
-SET @col_exists = 0;
-SELECT COUNT(*) INTO @col_exists
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = '_PurchasedLeads'
-AND COLUMN_NAME = 'orderId';
+-- SCHRITT 4: _PurchasedLeads Tabelle erweitern
+-- Spalte orderId hinzufügen (ignoriert Fehler wenn bereits vorhanden)
+ALTER TABLE `_PurchasedLeads` ADD COLUMN orderId VARCHAR(255) NULL;
 
-SET @sql = IF(@col_exists = 0,
-    'ALTER TABLE `_PurchasedLeads` ADD COLUMN orderId VARCHAR(255) NULL',
-    'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- SCHRITT 5: purchasePrice Spalte hinzufügen
+ALTER TABLE `_PurchasedLeads` ADD COLUMN purchasePrice DECIMAL(10,2) NULL;
 
--- Add purchasePrice column if it doesn't exist
-SET @col_exists = 0;
-SELECT COUNT(*) INTO @col_exists
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = '_PurchasedLeads'
-AND COLUMN_NAME = 'purchasePrice';
+-- SCHRITT 6: Foreign Key für orderId hinzufügen
+ALTER TABLE `_PurchasedLeads`
+    ADD CONSTRAINT fk_purchased_leads_order
+    FOREIGN KEY (orderId) REFERENCES `Order`(id) ON DELETE SET NULL;
 
-SET @sql = IF(@col_exists = 0,
-    'ALTER TABLE `_PurchasedLeads` ADD COLUMN purchasePrice DECIMAL(10,2) NULL',
-    'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
--- Add foreign key if it doesn't exist
-SET @fk_exists = 0;
-SELECT COUNT(*) INTO @fk_exists
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = '_PurchasedLeads'
-AND CONSTRAINT_NAME = 'fk_purchased_leads_order';
-
-SET @sql = IF(@fk_exists = 0,
-    'ALTER TABLE `_PurchasedLeads` ADD CONSTRAINT fk_purchased_leads_order FOREIGN KEY (orderId) REFERENCES `Order`(id) ON DELETE SET NULL',
-    'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
--- Add index if it doesn't exist
-SET @idx_exists = 0;
-SELECT COUNT(*) INTO @idx_exists
-FROM INFORMATION_SCHEMA.STATISTICS
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = '_PurchasedLeads'
-AND INDEX_NAME = 'idx_pl_order';
-
-SET @sql = IF(@idx_exists = 0,
-    'ALTER TABLE `_PurchasedLeads` ADD INDEX idx_pl_order (orderId)',
-    'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- SCHRITT 7: Index für orderId hinzufügen
+ALTER TABLE `_PurchasedLeads` ADD INDEX idx_pl_order (orderId);
 
 -- ============================================
--- Migration Complete!
--- Tables: Cart, Order, OrderItem
--- Updated: _PurchasedLeads (orderId, purchasePrice)
+-- Migration abgeschlossen!
 -- ============================================
