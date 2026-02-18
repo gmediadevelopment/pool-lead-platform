@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Google Sheets credentials
 google-sheets-credentials.json
+
+# Hostinger environment variables (contains secrets!)
+hostinger.env
