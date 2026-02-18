@@ -316,5 +316,189 @@ export const db = {
             return 0
         }
     },
+
+    // ==================== CART FUNCTIONS ====================
+
+    async addToCart(userId: string, leadId: string): Promise<void> {
+        const pool = getPool()
+        const cartId = `cart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+        await pool.execute(
+            'INSERT INTO Cart (id, userId, leadId) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE addedAt = CURRENT_TIMESTAMP',
+            [cartId, userId, leadId]
+        )
+    },
+
+    async removeFromCart(userId: string, leadId: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute(
+            'DELETE FROM Cart WHERE userId = ? AND leadId = ?',
+            [userId, leadId]
+        )
+    },
+
+    async getCart(userId: string): Promise<any[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(`
+            SELECT 
+                c.id,
+                c.userId,
+                c.leadId,
+                c.addedAt,
+                l.*
+            FROM Cart c
+            INNER JOIN Lead l ON c.leadId = l.id
+            WHERE c.userId = ?
+            ORDER BY c.addedAt DESC
+        `, [userId])
+
+        return rows as any[]
+    },
+
+    async clearCart(userId: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute('DELETE FROM Cart WHERE userId = ?', [userId])
+    },
+
+    async isInCart(userId: string, leadId: string): Promise<boolean> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT id FROM Cart WHERE userId = ? AND leadId = ?',
+            [userId, leadId]
+        ) as any
+        return rows.length > 0
+    },
+
+    // ==================== ORDER FUNCTIONS ====================
+
+    async createOrder(orderData: {
+        userId: string
+        subtotal: number
+        discount: number
+        taxRate: number
+        taxAmount: number
+        total: number
+        paymentMethod: 'stripe' | 'paypal'
+        paymentId: string
+    }): Promise<string> {
+        const pool = getPool()
+        const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+        await pool.execute(`
+            INSERT INTO \`Order\` (
+                id, userId, subtotal, discount, taxRate, taxAmount, total,
+                paymentMethod, paymentId, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+        `, [
+            orderId,
+            orderData.userId,
+            orderData.subtotal,
+            orderData.discount,
+            orderData.taxRate,
+            orderData.taxAmount,
+            orderData.total,
+            orderData.paymentMethod,
+            orderData.paymentId
+        ])
+
+        return orderId
+    },
+
+    async addOrderItem(orderId: string, leadId: string, price: number): Promise<void> {
+        const pool = getPool()
+        const itemId = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+        await pool.execute(
+            'INSERT INTO OrderItem (id, orderId, leadId, price) VALUES (?, ?, ?, ?)',
+            [itemId, orderId, leadId, price]
+        )
+    },
+
+    async completeOrder(orderId: string, invoiceNumber: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute(`
+            UPDATE \`Order\` 
+            SET status = 'completed', 
+                invoiceNumber = ?,
+                completedAt = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `, [invoiceNumber, orderId])
+    },
+
+    async failOrder(orderId: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute(
+            'UPDATE `Order` SET status = \'failed\' WHERE id = ?',
+            [orderId]
+        )
+    },
+
+    async getOrder(orderId: string): Promise<any | null> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM `Order` WHERE id = ?',
+            [orderId]
+        ) as any
+        return rows[0] || null
+    },
+
+    async getOrderItems(orderId: string): Promise<any[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(`
+            SELECT 
+                oi.*,
+                l.*
+            FROM OrderItem oi
+            INNER JOIN Lead l ON oi.leadId = l.id
+            WHERE oi.orderId = ?
+        `, [orderId])
+
+        return rows as any[]
+    },
+
+    async getUserOrders(userId: string): Promise<any[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(`
+            SELECT * FROM \`Order\`
+            WHERE userId = ?
+            ORDER BY createdAt DESC
+        `, [userId])
+
+        return rows as any[]
+    },
+
+    async getNextInvoiceNumber(): Promise<string> {
+        const pool = getPool()
+        const year = new Date().getFullYear()
+
+        const [rows] = await pool.execute(`
+            SELECT invoiceNumber 
+            FROM \`Order\` 
+            WHERE invoiceNumber LIKE ?
+            ORDER BY invoiceNumber DESC 
+            LIMIT 1
+        `, [`INV-${year}-%`]) as any
+
+        if (rows.length === 0) {
+            return `INV-${year}-00001`
+        }
+
+        const lastNumber = parseInt(rows[0].invoiceNumber.split('-')[2])
+        const nextNumber = (lastNumber + 1).toString().padStart(5, '0')
+        return `INV-${year}-${nextNumber}`
+    },
+
+    // Link purchased leads to order
+    async linkPurchasedLeadsToOrder(userId: string, leadIds: string[], orderId: string, prices: number[]): Promise<void> {
+        const pool = getPool()
+
+        for (let i = 0; i < leadIds.length; i++) {
+            await pool.execute(`
+                UPDATE _PurchasedLeads 
+                SET orderId = ?, purchasePrice = ?
+                WHERE userId = ? AND leadId = ?
+            `, [orderId, prices[i], userId, leadIds[i]])
+        }
+    }
 }
 
