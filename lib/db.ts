@@ -113,16 +113,19 @@ export const db = {
         timeline: string
         budgetConfirmed: boolean
         status: string
+        type?: string  // 'INTEREST' | 'CONSULTATION', defaults to INTEREST
         source: string
     }): Promise<Lead> {
         const pool = getPool()
         const id = crypto.randomUUID()
         const now = new Date()
 
-        // Calculate lead price based on estimated budget
-        const leadPrice = data.estimatedPriceMin
-            ? Math.round(data.estimatedPriceMin * 0.01) // 1% of min estimate
-            : 49 // default price
+        // Lead price is FIXED by type:
+        //   INTEREST     = 49€
+        //   CONSULTATION = 99€
+        // Pool budget / estimate has NO impact on lead price.
+        const leadType = data.type === 'CONSULTATION' ? 'CONSULTATION' : 'INTEREST'
+        const leadPrice = leadType === 'CONSULTATION' ? 99 : 49
 
         await pool.execute(
             `INSERT INTO \`Lead\` (id, firstName, lastName, email, phone, zip, city, poolType, dimensions, features,
@@ -145,7 +148,7 @@ export const db = {
                 data.estimatedPriceMax || null,
                 data.timeline,
                 data.budgetConfirmed ? 1 : 0,
-                'POOL',
+                leadType,
                 'NEW',
                 leadPrice,
                 now,
@@ -169,7 +172,7 @@ export const db = {
             estimatedPriceMax: data.estimatedPriceMax,
             timeline: data.timeline,
             budgetConfirmed: data.budgetConfirmed,
-            type: 'POOL',
+            type: leadType,
             status: 'NEW',
             price: leadPrice,
             createdAt: now,
@@ -214,7 +217,7 @@ export const db = {
         }
     },
 
-    // Update lead to consultation - preserves PUBLISHED status, updates type
+    // Update lead to consultation - preserves status, upgrades type AND sets price to 99€
     async updateLeadConsultation(
         id: string,
         status: string,
@@ -226,6 +229,7 @@ export const db = {
             `UPDATE \`Lead\` SET 
                 status = ?,
                 type = 'CONSULTATION',
+                price = 99.00,
                 timeline = COALESCE(?, timeline),
                 budgetConfirmed = COALESCE(?, budgetConfirmed),
                 updatedAt = ?

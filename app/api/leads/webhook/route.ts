@@ -89,10 +89,9 @@ export async function POST(request: NextRequest) {
             // If no existing lead found, fall through and create new one as CONSULTATION
         }
 
-        // Calculate lead price based on estimated budget
-        const leadPrice = estimatedPriceMin
-            ? Math.round(estimatedPriceMin * 0.01) // 1% of min estimate
-            : 49 // default price
+        // Lead type is determined ONLY by the WordPress status field
+        // Price is set inside createLeadFromWebhook based on type: INTEREST=49€, CONSULTATION=99€
+        const leadType = isConsultationRequest ? 'CONSULTATION' : 'INTEREST'
 
         // Create new lead
         const lead = await db.createLeadFromWebhook({
@@ -112,10 +111,9 @@ export async function POST(request: NextRequest) {
             timeline: timeframe || '',
             // Plugin v2.6+ sends full German string, old format was 'yes'
             budgetConfirmed: budgetConfirmed === 'yes' || budgetConfirmed === 'Ja, Budget ist vorhanden',
-            // If consultation was requested directly (no prior lead found), create as NEW with CONSULTATION type
-            // CONSULTATION_REQUESTED is NOT a valid LeadStatus enum value!
-            status: 'NEW',
             source: 'wordpress_planer',
+            type: leadType,
+            status: 'NEW',
         })
 
         return NextResponse.json({

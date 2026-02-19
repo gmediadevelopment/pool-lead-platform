@@ -45,9 +45,10 @@ const BUDGET_RANGES = [
     { label: "Über 100.000€", min: 100000, max: Infinity },
 ]
 
-// A lead is CONSULTATION if type says so OR price >= 99 (fallback for legacy DB rows)
+// Lead type is ONLY determined by the 'type' field (INTEREST=49€ / CONSULTATION=99€)
+// Price is a RESULT of type, never used to determine type
 function getEffectiveType(lead: Lead) {
-    return lead.type === 'CONSULTATION' || Number(lead.price) >= 99 ? 'CONSULTATION' : 'INTEREST'
+    return lead.type === 'CONSULTATION' ? 'CONSULTATION' : 'INTEREST'
 }
 
 function toggle<T>(arr: T[], val: T, set: (v: T[]) => void) {
