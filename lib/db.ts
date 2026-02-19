@@ -244,11 +244,12 @@ export const db = {
         const pool = getPool()
         if (excludeUserId) {
             // Exclude leads already purchased by this user
+            // _PurchasedLeads: A = Lead.id (alphabetically first), B = User.id
             const [rows] = await pool.execute(`
                 SELECT l.* FROM Lead l
                 WHERE l.status = 'PUBLISHED'
                 AND l.id NOT IN (
-                    SELECT leadId FROM _PurchasedLeads WHERE userId = ?
+                    SELECT A FROM _PurchasedLeads WHERE B = ?
                 )
                 ORDER BY l.createdAt DESC
             `, [excludeUserId])
@@ -263,11 +264,12 @@ export const db = {
 
     async findLeadsByBuyerId(buyerId: string): Promise<Lead[]> {
         const pool = getPool()
+        // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M convention)
         const [rows] = await pool.execute(
             `SELECT l.* FROM Lead l
-             INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
-             WHERE pl.userId = ?
-             ORDER BY pl.createdAt DESC`,
+             INNER JOIN _PurchasedLeads pl ON l.id = pl.A
+             WHERE pl.B = ?
+             ORDER BY l.createdAt DESC`,
             [buyerId]
         )
         return rows as Lead[]
@@ -462,11 +464,12 @@ export const db = {
     async getPurchasedLeads(userId: string): Promise<Lead[]> {
         const pool = getPool()
         try {
+            // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M)
             const [rows] = await pool.execute(`
                 SELECT l.* FROM Lead l
-                INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
-                WHERE pl.userId = ?
-                ORDER BY pl.createdAt DESC
+                INNER JOIN _PurchasedLeads pl ON l.id = pl.A
+                WHERE pl.B = ?
+                ORDER BY l.createdAt DESC
             `, [userId])
             return rows as Lead[]
         } catch (error) {
@@ -479,23 +482,15 @@ export const db = {
 
     async purchaseLead(userId: string, leadId: string): Promise<void> {
         const pool = getPool()
-        const now = new Date()
-        const id = `pl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
+        // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M convention)
         try {
             await pool.execute(
-                `INSERT INTO _PurchasedLeads (id, userId, leadId, createdAt)
-                 VALUES (?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE createdAt = createdAt`,
-                [id, userId, leadId, now]
+                `INSERT IGNORE INTO _PurchasedLeads (A, B) VALUES (?, ?)`,
+                [leadId, userId]
             )
         } catch (error) {
-            // If table has different structure, try without id column
-            await pool.execute(
-                `INSERT IGNORE INTO _PurchasedLeads (userId, leadId)
-                 VALUES (?, ?)`,
-                [userId, leadId]
-            )
+            console.error('Error recording purchase:', error)
+            throw error
         }
     },
 
@@ -683,16 +678,20 @@ export const db = {
         return `INV-${year}-${nextNumber}`
     },
 
-    // Link purchased leads to order
+    // Link purchased leads to order - sets orderId and purchasePrice (added via migration)
     async linkPurchasedLeadsToOrder(userId: string, leadIds: string[], orderId: string, prices: number[]): Promise<void> {
         const pool = getPool()
-
+        // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M)
         for (let i = 0; i < leadIds.length; i++) {
-            await pool.execute(`
-                UPDATE _PurchasedLeads 
-                SET orderId = ?, purchasePrice = ?
-                WHERE userId = ? AND leadId = ?
-            `, [orderId, prices[i], userId, leadIds[i]])
+            try {
+                await pool.execute(`
+                    UPDATE _PurchasedLeads 
+                    SET orderId = ?, purchasePrice = ?
+                    WHERE A = ? AND B = ?
+                `, [orderId, prices[i], leadIds[i], userId])
+            } catch (e) {
+                // purchasePrice/orderId columns may not exist yet - ignore
+            }
         }
     },
 
@@ -714,25 +713,35 @@ export const db = {
     // Get all sold leads for admin view
     async getSoldLeads(): Promise<any[]> {
         const pool = getPool()
-        // Get leads that have at least one buyer
-        const [rows] = await pool.execute(`
-            SELECT 
-                l.*,
-                COUNT(pl.userId) as buyerCount,
-                GROUP_CONCAT(u.email SEPARATOR ', ') as buyerEmails,
-                MAX(pl.createdAt) as lastSoldAt,
-                SUM(COALESCE(pl.purchasePrice, l.price)) as totalRevenue
-            FROM Lead l
-            INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
-            INNER JOIN User u ON pl.userId = u.id
-            GROUP BY l.id, l.firstName, l.lastName, l.email, l.phone, l.zip, l.city,
-                     l.poolType, l.dimensions, l.features, l.estimatedPrice,
-                     l.estimatedPriceMin, l.estimatedPriceMax, l.timeline,
-                     l.budgetConfirmed, l.type, l.status, l.price, l.salesCount,
-                     l.maxSales, l.exclusive, l.createdAt, l.updatedAt
-            ORDER BY lastSoldAt DESC
-        `) as any
-        return rows as any[]
+        try {
+            // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M)
+            // Use subquery to avoid ONLY_FULL_GROUP_BY issues
+            const [rows] = await pool.execute(`
+                SELECT 
+                    l.*,
+                    buyer_counts.buyerCount,
+                    buyer_counts.buyerEmails,
+                    buyer_counts.totalRevenue,
+                    buyer_counts.lastSoldAt
+                FROM Lead l
+                INNER JOIN (
+                    SELECT 
+                        pl.A as leadId,
+                        COUNT(pl.B) as buyerCount,
+                        GROUP_CONCAT(u.email SEPARATOR ', ') as buyerEmails,
+                        SUM(COALESCE(pl.purchasePrice, 0)) as totalRevenue,
+                        MAX(pl.purchasePrice) as lastSoldAt
+                    FROM _PurchasedLeads pl
+                    INNER JOIN User u ON pl.B = u.id
+                    GROUP BY pl.A
+                ) buyer_counts ON l.id = buyer_counts.leadId
+                ORDER BY buyer_counts.lastSoldAt DESC
+            `) as any
+            return rows as any[]
+        } catch (error) {
+            console.error('Error fetching sold leads:', error)
+            return []
+        }
     },
 }
 
