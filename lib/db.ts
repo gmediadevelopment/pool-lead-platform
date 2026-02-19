@@ -282,9 +282,10 @@ export const db = {
 
     async findNewLeads(): Promise<Lead[]> {
         const pool = getPool()
-        // Show both NEW and CONSULTATION_REQUESTED leads in admin queue
+        // Only valid LeadStatus enum values: NEW, VERIFIED, PUBLISHED, SOLD, ARCHIVED
+        // CONSULTATION_REQUESTED is NOT valid - leads with consultation get type=CONSULTATION but stay NEW
         const [rows] = await pool.execute(
-            "SELECT * FROM `Lead` WHERE status IN ('NEW', 'CONSULTATION_REQUESTED') ORDER BY createdAt DESC"
+            "SELECT * FROM `Lead` WHERE status = 'NEW' ORDER BY createdAt DESC"
         )
         return rows as Lead[]
     },

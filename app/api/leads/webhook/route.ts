@@ -68,11 +68,12 @@ export async function POST(request: NextRequest) {
             const existingLead = await db.findLeadByEmail(normalizedEmail)
 
             if (existingLead) {
-                // If lead is already PUBLISHED, keep it PUBLISHED - just update the type
-                // If lead is NEW, update to CONSULTATION_REQUESTED so admin can see the upgrade
-                const newStatus = existingLead.status === 'PUBLISHED' ? 'PUBLISHED' : 'CONSULTATION_REQUESTED'
-
-                await db.updateLeadConsultation(existingLead.id, newStatus, {
+                // IMPORTANT: Keep the existing status!
+                // CONSULTATION_REQUESTED is NOT a valid LeadStatus enum value in MySQL.
+                // We only upgrade the type to CONSULTATION and update consultation fields.
+                // - If status is NEW → stays NEW (admin can approve it from the queue)
+                // - If status is PUBLISHED → stays PUBLISHED (marketplace stays live)
+                await db.updateLeadConsultation(existingLead.id, existingLead.status, {
                     timeline: timeframe || existingLead.timeline,
                     budgetConfirmed: budgetConfirmed === 'yes',
                 })
@@ -81,10 +82,10 @@ export async function POST(request: NextRequest) {
                     success: true,
                     leadId: existingLead.id,
                     action: 'updated',
-                    message: `Lead updated to ${newStatus} with consultation request`,
+                    message: `Lead upgraded to CONSULTATION type, status kept as ${existingLead.status}`,
                 })
             }
-            // If no existing lead found, fall through and create new one
+            // If no existing lead found, fall through and create new one as CONSULTATION
         }
 
         // Calculate lead price based on estimated budget
