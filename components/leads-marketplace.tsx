@@ -52,11 +52,16 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
     const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "newest">("newest")
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
+    // A lead is a consultation if its type is CONSULTATION OR its price is >=99€
+    // (fallback for legacy DB records that have type=INTEREST but price=99)
+    const getEffectiveType = (lead: Lead) =>
+        lead.type === 'CONSULTATION' || Number(lead.price) >= 99 ? 'CONSULTATION' : 'INTEREST'
+
     const filtered = useMemo(() => {
         let result = [...leads]
 
         if (filterType.length > 0) {
-            result = result.filter(l => filterType.includes(l.type || "INTEREST"))
+            result = result.filter(l => filterType.includes(getEffectiveType(l)))
         }
         if (filterPoolType.length > 0) {
             result = result.filter(l => filterPoolType.includes(l.poolType || ""))
@@ -265,7 +270,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                         {filtered.map(lead => {
                             const isPurchased = purchasedLeadIds.includes(lead.id)
                             const isInCart = cartLeadIds.includes(lead.id)
-                            const isConsultation = lead.type === "CONSULTATION"
+                            const isConsultation = getEffectiveType(lead) === 'CONSULTATION'
 
                             return (
                                 <div key={lead.id} className={`relative rounded-xl border bg-white flex flex-col overflow-hidden transition-shadow hover:shadow-md ${isPurchased ? 'opacity-70' : ''} ${isConsultation ? 'border-blue-200' : 'border-gray-200'}`}>
