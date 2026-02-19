@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
                 // - If status is PUBLISHED → stays PUBLISHED (marketplace stays live)
                 await db.updateLeadConsultation(existingLead.id, existingLead.status, {
                     timeline: timeframe || existingLead.timeline,
-                    budgetConfirmed: budgetConfirmed === 'yes',
+                    // Plugin v2.6+ sends full German string, old format was 'yes'
+                    budgetConfirmed: budgetConfirmed === 'yes' || budgetConfirmed === 'Ja, Budget ist vorhanden',
                 })
 
                 return NextResponse.json({
@@ -109,9 +110,11 @@ export async function POST(request: NextRequest) {
             estimatedPriceMin,
             estimatedPriceMax,
             timeline: timeframe || '',
-            budgetConfirmed: budgetConfirmed === 'yes',
-            // If consultation was requested directly (no prior lead), mark accordingly
-            status: isConsultationRequest ? 'CONSULTATION_REQUESTED' : 'NEW',
+            // Plugin v2.6+ sends full German string, old format was 'yes'
+            budgetConfirmed: budgetConfirmed === 'yes' || budgetConfirmed === 'Ja, Budget ist vorhanden',
+            // If consultation was requested directly (no prior lead found), create as NEW with CONSULTATION type
+            // CONSULTATION_REQUESTED is NOT a valid LeadStatus enum value!
+            status: 'NEW',
             source: 'wordpress_planer',
         })
 

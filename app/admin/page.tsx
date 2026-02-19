@@ -28,7 +28,9 @@ export default async function AdminDashboard() {
                     </Card>
                 ) : (
                     newLeads.map((lead) => {
-                        const isConsultation = lead.type === 'CONSULTATION' || Number(lead.price) >= 99
+                        // Only use type field - NOT price, because lead price (1% of pool budget)
+                        // can exceed 99€ for expensive pools even when type is INTEREST
+                        const isConsultation = lead.type === 'CONSULTATION'
                         return (
                             <Card key={lead.id} className={isConsultation ? 'border-blue-300 shadow-sm shadow-blue-100' : ''}>
                                 <CardHeader>
@@ -81,7 +83,7 @@ export default async function AdminDashboard() {
                                             <div>
                                                 <p className="font-semibold">Beratung</p>
                                                 {lead.timeline && lead.timeline !== '' && <p>Bauzeitraum: {lead.timeline}</p>}
-                                                {lead.budgetConfirmed && <p className="text-green-600">✓ Budget bestätigt</p>}
+                                                {Boolean(lead.budgetConfirmed) && <p className="text-green-600">✓ Budget bestätigt</p>}
                                             </div>
                                         )}
                                     </div>
