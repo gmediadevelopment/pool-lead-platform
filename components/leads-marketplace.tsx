@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { AddToCartButton } from "@/components/cart/add-to-cart-button"
 import { BuyNowButton } from "@/components/cart/buy-now-button"
 import {
     MapPin, Ruler, Waves, SlidersHorizontal, X,
-    Star, CheckCircle2, Clock, Tag, Euro
+    Star, CheckCircle2, Clock, Euro
 } from "lucide-react"
+
+// ---------------------------------------------------------------------------
+// Types & Constants
+// ---------------------------------------------------------------------------
 
 interface Lead {
     id: string
@@ -43,71 +45,45 @@ const BUDGET_RANGES = [
     { label: "Über 100.000€", min: 100000, max: Infinity },
 ]
 
-export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props) {
-    const [filterType, setFilterType] = useState<string[]>([])
-    const [filterPoolType, setFilterPoolType] = useState<string[]>([])
-    const [filterTimeline, setFilterTimeline] = useState<string[]>([])
-    const [filterBudget, setFilterBudget] = useState<number | null>(null)
-    const [filterZip, setFilterZip] = useState("")
-    const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "newest">("newest")
-    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+// A lead is CONSULTATION if type says so OR price >= 99 (fallback for legacy DB rows)
+function getEffectiveType(lead: Lead) {
+    return lead.type === 'CONSULTATION' || Number(lead.price) >= 99 ? 'CONSULTATION' : 'INTEREST'
+}
 
-    // A lead is a consultation if its type is CONSULTATION OR its price is >=99€
-    // (fallback for legacy DB records that have type=INTEREST but price=99)
-    const getEffectiveType = (lead: Lead) =>
-        lead.type === 'CONSULTATION' || Number(lead.price) >= 99 ? 'CONSULTATION' : 'INTEREST'
+function toggle<T>(arr: T[], val: T, set: (v: T[]) => void) {
+    set(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val])
+}
 
-    const filtered = useMemo(() => {
-        let result = [...leads]
+// ---------------------------------------------------------------------------
+// FilterSidebar – defined OUTSIDE LeadsMarketplace so React never remounts it
+// ---------------------------------------------------------------------------
 
-        if (filterType.length > 0) {
-            result = result.filter(l => filterType.includes(getEffectiveType(l)))
-        }
-        if (filterPoolType.length > 0) {
-            result = result.filter(l => filterPoolType.includes(l.poolType || ""))
-        }
-        if (filterTimeline.length > 0) {
-            result = result.filter(l => l.timeline && filterTimeline.some(t =>
-                l.timeline?.toLowerCase().includes(t.toLowerCase())
-            ))
-        }
-        if (filterBudget !== null) {
-            const range = BUDGET_RANGES[filterBudget]
-            result = result.filter(l => {
-                const mid = Number(l.estimatedPrice || l.estimatedPriceMin || 0)
-                return mid >= range.min && mid <= range.max
-            })
-        }
-        if (filterZip.trim()) {
-            result = result.filter(l => l.zip?.startsWith(filterZip.trim()))
-        }
+interface FilterSidebarProps {
+    sortBy: string
+    setSortBy: (v: "price_asc" | "price_desc" | "newest") => void
+    filterZip: string
+    setFilterZip: (v: string) => void
+    filterType: string[]
+    setFilterType: (v: string[]) => void
+    filterPoolType: string[]
+    setFilterPoolType: (v: string[]) => void
+    filterBudget: number | null
+    setFilterBudget: (v: number | null) => void
+    filterTimeline: string[]
+    setFilterTimeline: (v: string[]) => void
+}
 
-        result.sort((a, b) => {
-            if (sortBy === "price_asc") return Number(a.price) - Number(b.price)
-            if (sortBy === "price_desc") return Number(b.price) - Number(a.price)
-            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-        })
-
-        return result
-    }, [leads, filterType, filterPoolType, filterTimeline, filterBudget, filterZip, sortBy])
-
-    const activeFilterCount = filterType.length + filterPoolType.length + filterTimeline.length + (filterBudget !== null ? 1 : 0) + (filterZip ? 1 : 0)
-
-    function clearAll() {
-        setFilterType([])
-        setFilterPoolType([])
-        setFilterTimeline([])
-        setFilterBudget(null)
-        setFilterZip("")
-    }
-
-    function toggle<T>(arr: T[], val: T, set: (v: T[]) => void) {
-        set(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val])
-    }
-
-    const FilterSidebar = () => (
+function FilterSidebar({
+    sortBy, setSortBy,
+    filterZip, setFilterZip,
+    filterType, setFilterType,
+    filterPoolType, setFilterPoolType,
+    filterBudget, setFilterBudget,
+    filterTimeline, setFilterTimeline,
+}: FilterSidebarProps) {
+    return (
         <div className="space-y-5">
-            {/* Sort */}
+            {/* Sortierung */}
             <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sortierung</h3>
                 <select
@@ -121,7 +97,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 </select>
             </div>
 
-            {/* PLZ Filter */}
+            {/* PLZ */}
             <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">PLZ / Region</h3>
                 <input
@@ -134,25 +110,23 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 />
             </div>
 
-            {/* Lead Typ */}
+            {/* Lead-Typ */}
             <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Lead-Typ</h3>
                 <div className="space-y-2">
                     {[
-                        { value: "CONSULTATION", label: "Beratung angefragt", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: Star },
-                        { value: "INTEREST", label: "Interesse", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: CheckCircle2 },
-                    ].map(({ value, label, color, bg, icon: Icon }) => (
-                        <label key={value} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${filterType.includes(value) ? `${bg} border-current` : 'border-gray-200 hover:bg-gray-50'}`}>
-                            <input
-                                type="checkbox"
-                                className="sr-only"
-                                checked={filterType.includes(value)}
-                                onChange={() => toggle(filterType, value, setFilterType)}
-                            />
-                            <Icon className={`h-4 w-4 ${filterType.includes(value) ? color : 'text-gray-400'}`} />
-                            <span className={`text-sm font-medium ${filterType.includes(value) ? color : 'text-gray-600'}`}>{label}</span>
-                        </label>
-                    ))}
+                        { value: "CONSULTATION", label: "Beratung angefragt", icon: Star },
+                        { value: "INTEREST", label: "Interesse", icon: CheckCircle2 },
+                    ].map(({ value, label, icon: Icon }) => {
+                        const active = filterType.includes(value)
+                        return (
+                            <label key={value} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${active ? 'bg-blue-50 border-blue-200' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                <input type="checkbox" className="sr-only" checked={active} onChange={() => toggle(filterType, value, setFilterType)} />
+                                <Icon className={`h-4 w-4 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
+                                <span className={`text-sm font-medium ${active ? 'text-blue-700' : 'text-gray-600'}`}>{label}</span>
+                            </label>
+                        )
+                    })}
                 </div>
             </div>
 
@@ -160,15 +134,18 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
             <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Pool-Typ</h3>
                 <div className="space-y-1.5">
-                    {POOL_TYPES.map(type => (
-                        <label key={type} className="flex items-center gap-2.5 cursor-pointer group">
-                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${filterPoolType.includes(type) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
-                                {filterPoolType.includes(type) && <X className="h-2.5 w-2.5 text-white" />}
-                            </div>
-                            <input type="checkbox" className="sr-only" checked={filterPoolType.includes(type)} onChange={() => toggle(filterPoolType, type, setFilterPoolType)} />
-                            <span className={`text-sm transition-colors ${filterPoolType.includes(type) ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{type}</span>
-                        </label>
-                    ))}
+                    {POOL_TYPES.map(type => {
+                        const active = filterPoolType.includes(type)
+                        return (
+                            <label key={type} className="flex items-center gap-2.5 cursor-pointer group">
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${active ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
+                                    {active && <X className="h-2.5 w-2.5 text-white" />}
+                                </div>
+                                <input type="checkbox" className="sr-only" checked={active} onChange={() => toggle(filterPoolType, type, setFilterPoolType)} />
+                                <span className={`text-sm transition-colors ${active ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{type}</span>
+                            </label>
+                        )
+                    })}
                 </div>
             </div>
 
@@ -176,15 +153,18 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
             <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Budget-Bereich</h3>
                 <div className="space-y-1.5">
-                    {BUDGET_RANGES.map((range, i) => (
-                        <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${filterBudget === i ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
-                                {filterBudget === i && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                            </div>
-                            <input type="radio" className="sr-only" checked={filterBudget === i} onChange={() => setFilterBudget(filterBudget === i ? null : i)} />
-                            <span className={`text-sm transition-colors ${filterBudget === i ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{range.label}</span>
-                        </label>
-                    ))}
+                    {BUDGET_RANGES.map((range, i) => {
+                        const active = filterBudget === i
+                        return (
+                            <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${active ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
+                                    {active && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </div>
+                                <input type="radio" className="sr-only" checked={active} onChange={() => setFilterBudget(active ? null : i)} />
+                                <span className={`text-sm transition-colors ${active ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{range.label}</span>
+                            </label>
+                        )
+                    })}
                 </div>
             </div>
 
@@ -192,16 +172,69 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
             <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Realisierung</h3>
                 <div className="flex flex-wrap gap-1.5">
-                    {TIMELINES.map(t => (
-                        <button key={t}
-                            onClick={() => toggle(filterTimeline, t, setFilterTimeline)}
-                            className={`text-xs px-2.5 py-1 rounded-full border transition-all ${filterTimeline.includes(t) ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600'}`}
-                        >{t}</button>
-                    ))}
+                    {TIMELINES.map(t => {
+                        const active = filterTimeline.includes(t)
+                        return (
+                            <button key={t}
+                                onClick={() => toggle(filterTimeline, t, setFilterTimeline)}
+                                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${active ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600'}`}
+                            >{t}</button>
+                        )
+                    })}
                 </div>
             </div>
         </div>
     )
+}
+
+// ---------------------------------------------------------------------------
+// Main export
+// ---------------------------------------------------------------------------
+
+export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props) {
+    const [filterType, setFilterType] = useState<string[]>([])
+    const [filterPoolType, setFilterPoolType] = useState<string[]>([])
+    const [filterTimeline, setFilterTimeline] = useState<string[]>([])
+    const [filterBudget, setFilterBudget] = useState<number | null>(null)
+    const [filterZip, setFilterZip] = useState("")
+    const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "newest">("newest")
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+    const filtered = useMemo(() => {
+        let result = [...leads]
+        if (filterType.length > 0) result = result.filter(l => filterType.includes(getEffectiveType(l)))
+        if (filterPoolType.length > 0) result = result.filter(l => filterPoolType.includes(l.poolType || ""))
+        if (filterTimeline.length > 0) result = result.filter(l => l.timeline && filterTimeline.some(t => l.timeline!.toLowerCase().includes(t.toLowerCase())))
+        if (filterBudget !== null) {
+            const range = BUDGET_RANGES[filterBudget]
+            result = result.filter(l => {
+                const mid = Number(l.estimatedPrice || l.estimatedPriceMin || 0)
+                return mid >= range.min && mid <= range.max
+            })
+        }
+        if (filterZip.trim()) result = result.filter(l => l.zip?.startsWith(filterZip.trim()))
+        result.sort((a, b) => {
+            if (sortBy === "price_asc") return Number(a.price) - Number(b.price)
+            if (sortBy === "price_desc") return Number(b.price) - Number(a.price)
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        })
+        return result
+    }, [leads, filterType, filterPoolType, filterTimeline, filterBudget, filterZip, sortBy])
+
+    const activeFilterCount = filterType.length + filterPoolType.length + filterTimeline.length + (filterBudget !== null ? 1 : 0) + (filterZip ? 1 : 0)
+
+    function clearAll() {
+        setFilterType([]); setFilterPoolType([]); setFilterTimeline([]); setFilterBudget(null); setFilterZip("")
+    }
+
+    const sidebarProps: FilterSidebarProps = {
+        sortBy, setSortBy,
+        filterZip, setFilterZip,
+        filterType, setFilterType,
+        filterPoolType, setFilterPoolType,
+        filterBudget, setFilterBudget,
+        filterTimeline, setFilterTimeline,
+    }
 
     return (
         <div className="flex gap-6">
@@ -224,7 +257,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                             </button>
                         )}
                     </div>
-                    <FilterSidebar />
+                    <FilterSidebar {...sidebarProps} />
                 </div>
             </aside>
 
@@ -238,7 +271,6 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                             {filtered.length} von {leads.length} {leads.length === 1 ? 'Lead' : 'Leads'} angezeigt
                         </p>
                     </div>
-                    {/* Mobile filter toggle */}
                     <button
                         onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
                         className="lg:hidden flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600"
@@ -251,7 +283,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 {/* Mobile filters */}
                 {mobileFiltersOpen && (
                     <div className="lg:hidden bg-white rounded-xl border border-gray-200 p-4 mb-4">
-                        <FilterSidebar />
+                        <FilterSidebar {...sidebarProps} />
                     </div>
                 )}
 
@@ -275,13 +307,13 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                             return (
                                 <div key={lead.id} className={`relative rounded-xl border bg-white flex flex-col overflow-hidden transition-shadow hover:shadow-md ${isPurchased ? 'opacity-70' : ''} ${isConsultation ? 'border-blue-200' : 'border-gray-200'}`}>
 
-                                    {/* Consultation premium top bar */}
+                                    {/* Consultation top bar */}
                                     {isConsultation && (
                                         <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #1E88D9, #5BB5F0)' }} />
                                     )}
 
                                     <div className="p-4 flex-1 flex flex-col">
-                                        {/* Header row */}
+                                        {/* Header */}
                                         <div className="flex justify-between items-start mb-3">
                                             {isConsultation ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-blue-700 bg-blue-100">
@@ -289,7 +321,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                                     Beratung angefragt
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-blue-700 bg-blue-100">
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-gray-600 bg-gray-100">
                                                     <CheckCircle2 className="h-3 w-3" />
                                                     Interesse
                                                 </span>
@@ -308,7 +340,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                             {lead.zip} {lead.city}
                                         </div>
 
-                                        {/* Details row */}
+                                        {/* Details */}
                                         <div className="flex gap-4 text-sm text-gray-500 mb-3">
                                             {lead.dimensions && (
                                                 <div className="flex items-center gap-1.5">
@@ -324,7 +356,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                             )}
                                         </div>
 
-                                        {/* Budget + Timeline box */}
+                                        {/* Budget / Timeline */}
                                         <div className={`rounded-lg p-3 text-sm space-y-1.5 mb-3 ${isConsultation ? 'bg-blue-50' : 'bg-gray-50'}`}>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500 flex items-center gap-1">
