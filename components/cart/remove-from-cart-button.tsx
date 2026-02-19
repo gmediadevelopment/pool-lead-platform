@@ -23,6 +23,7 @@ export function RemoveFromCartButton({ leadId }: RemoveFromCartButtonProps) {
             })
 
             if (res.ok) {
+                window.dispatchEvent(new Event('cart-updated'))
                 router.refresh()
             } else {
                 alert('Fehler beim Entfernen')

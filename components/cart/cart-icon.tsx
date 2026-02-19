@@ -24,7 +24,12 @@ export function CartIcon() {
         fetchCartCount()
         // Refresh every 30 seconds
         const interval = setInterval(fetchCartCount, 30000)
-        return () => clearInterval(interval)
+        // Also refresh instantly when cart changes (fired by add/remove buttons)
+        window.addEventListener('cart-updated', fetchCartCount)
+        return () => {
+            clearInterval(interval)
+            window.removeEventListener('cart-updated', fetchCartCount)
+        }
     }, [])
 
     return (

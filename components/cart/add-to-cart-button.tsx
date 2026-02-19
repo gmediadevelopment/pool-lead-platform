@@ -42,6 +42,7 @@ export function AddToCartButton({ leadId, isInCart = false, isPurchased = false,
 
             if (res.ok) {
                 setInCart(true)
+                window.dispatchEvent(new Event('cart-updated'))
                 router.refresh()
             } else {
                 const data = await res.json()
