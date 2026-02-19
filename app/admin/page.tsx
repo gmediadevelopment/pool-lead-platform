@@ -38,10 +38,14 @@ export default async function AdminDashboard() {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                 <CardTitle>{lead.firstName} {lead.lastName}</CardTitle>
-                                                {isConsultation && (
+                                                {isConsultation ? (
                                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                                                         <Star className="h-3 w-3 fill-blue-500 text-blue-500" />
                                                         Beratung angefragt – 99€
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                                                        Interessent – 49€
                                                     </span>
                                                 )}
                                             </div>
