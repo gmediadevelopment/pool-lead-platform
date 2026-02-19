@@ -755,5 +755,40 @@ export const db = {
             return []
         }
     },
-}
 
+    // ONE-TIME migration: fix legacy leads with type='POOL' and wrong prices
+    async migrateLeadTypes(): Promise<Record<string, number>> {
+        const pool = getPool()
+
+        // Step 1: POOL + consultation data (budgetConfirmed or timeline) → CONSULTATION + 99€
+        const [r1] = await pool.execute(
+            `UPDATE \`Lead\` SET type='CONSULTATION', price=99.00, updatedAt=NOW()
+             WHERE type='POOL' AND (budgetConfirmed=1 OR (timeline IS NOT NULL AND timeline!=''))`
+        ) as any[]
+
+        // Step 2: Remaining POOL (no consultation data) → INTEREST + 49€
+        const [r2] = await pool.execute(
+            `UPDATE \`Lead\` SET type='INTEREST', price=49.00, updatedAt=NOW()
+             WHERE type='POOL'`
+        ) as any[]
+
+        // Step 3: CONSULTATION leads → ensure price=99
+        const [r3] = await pool.execute(
+            `UPDATE \`Lead\` SET price=99.00, updatedAt=NOW()
+             WHERE type='CONSULTATION' AND price!=99.00`
+        ) as any[]
+
+        // Step 4: INTEREST leads → ensure price=49
+        const [r4] = await pool.execute(
+            `UPDATE \`Lead\` SET price=49.00, updatedAt=NOW()
+             WHERE type='INTEREST' AND price!=49.00`
+        ) as any[]
+
+        return {
+            'POOL→CONSULTATION': r1.affectedRows,
+            'POOL→INTEREST': r2.affectedRows,
+            'CONSULTATION price fixed': r3.affectedRows,
+            'INTEREST price fixed': r4.affectedRows,
+        }
+    },
+}
