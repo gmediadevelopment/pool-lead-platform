@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { LayoutDashboard, Users, FileText } from "lucide-react"
+import { LayoutDashboard, Users, FileText, ShoppingBag } from "lucide-react"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerSession(authOptions)
@@ -27,6 +27,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <Link href="/admin/leads" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded transition-colors">
                         <FileText className="h-5 w-5" />
                         Leads verwalten
+                    </Link>
+                    <Link href="/admin/sold-leads" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded transition-colors">
+                        <ShoppingBag className="h-5 w-5" />
+                        Verkaufte Leads
                     </Link>
                     <Link href="/admin/users" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded transition-colors">
                         <Users className="h-5 w-5" />

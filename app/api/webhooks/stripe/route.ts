@@ -71,6 +71,13 @@ async function handleSuccessfulPayment(data: {
     isSingleItem: boolean
 }) {
     try {
+        // IDEMPOTENCY CHECK: Prevent duplicate orders if webhook fires twice
+        const existingOrder = await db.getOrderByPaymentId(data.paymentId)
+        if (existingOrder) {
+            console.log(`⚠️ Order for paymentId ${data.paymentId} already exists (${existingOrder.id}). Skipping duplicate.`)
+            return
+        }
+
         // Create order in database
         const orderId = await db.createOrder({
             userId: data.userId,
@@ -94,22 +101,21 @@ async function handleSuccessfulPayment(data: {
         // Complete order
         await db.completeOrder(orderId, invoiceNumber)
 
-        // Add leads to purchased leads
-        for (const leadId of data.leadIds) {
-            await db.purchaseLead(data.userId, leadId)
+        // Add leads to purchased leads & update lead status
+        for (let i = 0; i < data.leadIds.length; i++) {
+            await db.purchaseLead(data.userId, data.leadIds[i])
+            await db.updateLeadSalesCount(data.leadIds[i])
         }
 
         // Link purchased leads to order
         await db.linkPurchasedLeadsToOrder(data.userId, data.leadIds, orderId, data.prices)
 
-        // Clear cart (if not single item purchase)
+        // Clear cart (always clear purchased leads from cart)
+        for (const leadId of data.leadIds) {
+            await db.removeFromCart(data.userId, leadId)
+        }
         if (!data.isSingleItem) {
             await db.clearCart(data.userId)
-        } else {
-            // Remove only the purchased lead from cart
-            for (const leadId of data.leadIds) {
-                await db.removeFromCart(data.userId, leadId)
-            }
         }
 
         console.log(`✅ Order ${orderId} completed. Invoice: ${invoiceNumber}`)

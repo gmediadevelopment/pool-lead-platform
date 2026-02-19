@@ -591,6 +591,16 @@ export const db = {
         return this.getOrder(orderId)
     },
 
+    // Idempotency check - find order by Stripe/PayPal payment ID
+    async getOrderByPaymentId(paymentId: string): Promise<any | null> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM `Order` WHERE paymentId = ? LIMIT 1',
+            [paymentId]
+        ) as any
+        return rows[0] || null
+    },
+
     async getOrderItems(orderId: string): Promise<any[]> {
         const pool = getPool()
         const [rows] = await pool.execute(`
@@ -648,6 +658,40 @@ export const db = {
                 WHERE userId = ? AND leadId = ?
             `, [orderId, prices[i], userId, leadIds[i]])
         }
-    }
+    },
+
+    // Update lead salesCount and set status to SOLD if maxSales reached
+    async updateLeadSalesCount(leadId: string): Promise<void> {
+        const pool = getPool()
+        await pool.execute(`
+            UPDATE Lead
+            SET salesCount = salesCount + 1,
+                status = CASE
+                    WHEN (exclusive = 1 AND salesCount + 1 >= 1) THEN 'SOLD'
+                    WHEN (salesCount + 1 >= maxSales) THEN 'SOLD'
+                    ELSE status
+                END
+            WHERE id = ?
+        `, [leadId])
+    },
+
+    // Get all sold leads for admin view
+    async getSoldLeads(): Promise<any[]> {
+        const pool = getPool()
+        const [rows] = await pool.execute(`
+            SELECT 
+                l.*,
+                COUNT(pl.userId) as buyerCount,
+                GROUP_CONCAT(u.email ORDER BY pl.createdAt SEPARATOR ', ') as buyerEmails,
+                MAX(pl.createdAt) as lastSoldAt,
+                MAX(pl.purchasePrice) as purchasePrice
+            FROM Lead l
+            INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
+            INNER JOIN User u ON pl.userId = u.id
+            GROUP BY l.id
+            ORDER BY lastSoldAt DESC
+        `) as any
+        return rows as any[]
+    },
 }
 

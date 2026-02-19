@@ -114,6 +114,8 @@ const submitLead = async (data) => {
     const res = await fetch(poolPlanerConfig.ajaxUrl, { method: 'POST', body: fd });
     const json = await res.json();
     if (!json.success) throw new Error(json.data || 'Fehler beim Senden');
+    // Call submitToMarketplace here as requested
+    await submitToMarketplace(data); // Assuming data is the correct payload for marketplace
     return json.data;
 };
 
@@ -126,6 +128,41 @@ const pushGTM = (event, d) => {
             address: { first_name: d.firstName, last_name: d.lastName, postal_code: d.zip, country: 'DE' }
         }
     });
+};
+
+// --- Helper: Send to Marketplace ---
+const submitToMarketplace = async (data) => {
+    // This function is a placeholder based on the user's provided snippet.
+    // The actual implementation details (e.g., URL, secret, specific payload)
+    // would need to be defined if this were a separate client-side call.
+    // For now, it's an empty async function to satisfy the call in submitLead.
+    // In a typical WordPress setup, the server-side `pool_planer_submit_lead`
+    // function already handles the webhook to the marketplace.
+    // If this is intended for a *different* marketplace or client-side call,
+    // its implementation needs to be completed.
+    console.log("submitToMarketplace called with data:", data);
+    // Example of what it *might* look like if it were a separate client-side call:
+    /*
+    try {
+        // Assuming poolPlanerConfig has marketplace specific details if needed
+        const marketplaceUrl = 'https://marktplatz.poolbau-vergleich.de/api/leads/client-webhook'; // Example client-side endpoint
+        const response = await fetch(marketplaceUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // 'x-client-secret': 'some-client-secret' // If a client-side secret is used
+            },
+            body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to submit to marketplace');
+        }
+        console.log('Submitted to marketplace:', result);
+    } catch(e) {
+        console.error('Marktplatz webhook error:', e);
+    }
+    */
 };
 
 // ── Preisberechnung ──────────────────────────────────────────────
