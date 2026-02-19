@@ -214,8 +214,46 @@ export const db = {
         }
     },
 
-    async findPublishedLeads(): Promise<Lead[]> {
+    // Update lead to consultation - preserves PUBLISHED status, updates type
+    async updateLeadConsultation(
+        id: string,
+        status: string,
+        extra?: { timeline?: string; budgetConfirmed?: boolean }
+    ): Promise<void> {
         const pool = getPool()
+        const now = new Date()
+        await pool.execute(
+            `UPDATE \`Lead\` SET 
+                status = ?,
+                type = 'CONSULTATION',
+                timeline = COALESCE(?, timeline),
+                budgetConfirmed = COALESCE(?, budgetConfirmed),
+                updatedAt = ?
+             WHERE id = ?`,
+            [
+                status,
+                extra?.timeline ?? null,
+                extra?.budgetConfirmed !== undefined ? (extra.budgetConfirmed ? 1 : 0) : null,
+                now,
+                id,
+            ]
+        )
+    },
+
+    async findPublishedLeads(excludeUserId?: string): Promise<Lead[]> {
+        const pool = getPool()
+        if (excludeUserId) {
+            // Exclude leads already purchased by this user
+            const [rows] = await pool.execute(`
+                SELECT l.* FROM Lead l
+                WHERE l.status = 'PUBLISHED'
+                AND l.id NOT IN (
+                    SELECT leadId FROM _PurchasedLeads WHERE userId = ?
+                )
+                ORDER BY l.createdAt DESC
+            `, [excludeUserId])
+            return rows as Lead[]
+        }
         const [rows] = await pool.execute(
             'SELECT * FROM Lead WHERE status = ? ORDER BY createdAt DESC',
             ['PUBLISHED']
@@ -225,12 +263,11 @@ export const db = {
 
     async findLeadsByBuyerId(buyerId: string): Promise<Lead[]> {
         const pool = getPool()
-        // Note: This requires a join with the _PurchasedLeads table (Prisma's many-to-many relation table)
         const [rows] = await pool.execute(
-            `SELECT l.* FROM Lead l 
-             INNER JOIN _PurchasedLeads pl ON l.id = pl.B 
-             WHERE pl.A = ? 
-             ORDER BY l.createdAt DESC`,
+            `SELECT l.* FROM Lead l
+             INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
+             WHERE pl.userId = ?
+             ORDER BY pl.createdAt DESC`,
             [buyerId]
         )
         return rows as Lead[]
@@ -238,9 +275,9 @@ export const db = {
 
     async findNewLeads(): Promise<Lead[]> {
         const pool = getPool()
+        // Show both NEW and CONSULTATION_REQUESTED leads in admin queue
         const [rows] = await pool.execute(
-            'SELECT * FROM `Lead` WHERE status = ? ORDER BY createdAt DESC',
-            ['NEW']
+            "SELECT * FROM `Lead` WHERE status IN ('NEW', 'CONSULTATION_REQUESTED') ORDER BY createdAt DESC"
         )
         return rows as Lead[]
     },
@@ -426,8 +463,7 @@ export const db = {
         const pool = getPool()
         try {
             const [rows] = await pool.execute(`
-                SELECT l.*
-                FROM Lead l
+                SELECT l.* FROM Lead l
                 INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
                 WHERE pl.userId = ?
                 ORDER BY pl.createdAt DESC
@@ -678,17 +714,22 @@ export const db = {
     // Get all sold leads for admin view
     async getSoldLeads(): Promise<any[]> {
         const pool = getPool()
+        // Get leads that have at least one buyer
         const [rows] = await pool.execute(`
             SELECT 
                 l.*,
                 COUNT(pl.userId) as buyerCount,
-                GROUP_CONCAT(u.email ORDER BY pl.createdAt SEPARATOR ', ') as buyerEmails,
+                GROUP_CONCAT(u.email SEPARATOR ', ') as buyerEmails,
                 MAX(pl.createdAt) as lastSoldAt,
-                MAX(pl.purchasePrice) as purchasePrice
+                SUM(COALESCE(pl.purchasePrice, l.price)) as totalRevenue
             FROM Lead l
             INNER JOIN _PurchasedLeads pl ON l.id = pl.leadId
             INNER JOIN User u ON pl.userId = u.id
-            GROUP BY l.id
+            GROUP BY l.id, l.firstName, l.lastName, l.email, l.phone, l.zip, l.city,
+                     l.poolType, l.dimensions, l.features, l.estimatedPrice,
+                     l.estimatedPriceMin, l.estimatedPriceMax, l.timeline,
+                     l.budgetConfirmed, l.type, l.status, l.price, l.salesCount,
+                     l.maxSales, l.exclusive, l.createdAt, l.updatedAt
             ORDER BY lastSoldAt DESC
         `) as any
         return rows as any[]

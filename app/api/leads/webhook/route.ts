@@ -68,8 +68,11 @@ export async function POST(request: NextRequest) {
             const existingLead = await db.findLeadByEmail(normalizedEmail)
 
             if (existingLead) {
-                // Update existing lead: mark as consultation requested
-                await db.updateLeadStatus(existingLead.id, 'CONSULTATION_REQUESTED', {
+                // If lead is already PUBLISHED, keep it PUBLISHED - just update the type
+                // If lead is NEW, update to CONSULTATION_REQUESTED so admin can see the upgrade
+                const newStatus = existingLead.status === 'PUBLISHED' ? 'PUBLISHED' : 'CONSULTATION_REQUESTED'
+
+                await db.updateLeadConsultation(existingLead.id, newStatus, {
                     timeline: timeframe || existingLead.timeline,
                     budgetConfirmed: budgetConfirmed === 'yes',
                 })
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
                     success: true,
                     leadId: existingLead.id,
                     action: 'updated',
-                    message: 'Lead updated to consultation requested',
+                    message: `Lead updated to ${newStatus} with consultation request`,
                 })
             }
             // If no existing lead found, fall through and create new one

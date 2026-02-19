@@ -9,7 +9,7 @@ import { BuyNowButton } from "@/components/cart/buy-now-button"
 
 export default async function LeadsPage() {
     const session = await getServerSession(authOptions)
-    const leads = await db.findPublishedLeads()
+    const leads = await db.findPublishedLeads(session?.user?.id)
 
     // Get purchased lead IDs for this user
     let purchasedLeadIds: string[] = []
