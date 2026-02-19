@@ -1,9 +1,8 @@
-import Link from "next/link"
-import { ShieldCheck, LayoutDashboard, ShoppingCart, User, List, Package } from "lucide-react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { CartIcon } from "@/components/cart/cart-icon"
+import { DashboardNav } from "@/components/dashboard-nav"
 
 export default async function DashboardLayout({
     children,
@@ -17,82 +16,29 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
-            {/* Sidebar */}
-            <aside className="hidden w-64 overflow-y-auto border-r bg-white dark:bg-gray-950 md:block">
-                <div className="flex h-14 items-center border-b px-4">
-                    <Link className="flex items-center gap-2 font-semibold" href="/">
-                        <ShieldCheck className="h-6 w-6 text-primary" />
-                        <span>PoolLeads</span>
-                    </Link>
-                </div>
-                <nav className="flex-1 p-4 space-y-2">
-                    <Link
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        href="/dashboard"
-                    >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dashboard
-                    </Link>
-                    <Link
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        href="/dashboard/leads"
-                    >
-                        <ShoppingCart className="h-4 w-4" />
-                        Leads kaufen
-                    </Link>
-                    <Link
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        href="/dashboard/my-leads"
-                    >
-                        <List className="h-4 w-4" />
-                        Meine Leads
-                    </Link>
-                    <Link
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        href="/dashboard/cart"
-                    >
-                        <ShoppingCart className="h-4 w-4" />
-                        Warenkorb
-                    </Link>
-                    <Link
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        href="/dashboard/orders"
-                    >
-                        <Package className="h-4 w-4" />
-                        Bestellungen
-                    </Link>
-                    <Link
-                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        href="/dashboard/profile"
-                    >
-                        <User className="h-4 w-4" />
-                        Profil
-                    </Link>
-                    {session.user?.role === "ADMIN" && (
-                        <Link
-                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-red-500 transition-all hover:text-red-900 dark:text-red-400 dark:hover:text-red-50 hover:bg-red-50 dark:hover:bg-red-950"
-                            href="/admin"
-                        >
-                            <ShieldCheck className="h-4 w-4" />
-                            Admin
-                        </Link>
-                    )}
-                </nav>
-            </aside>
+        <div className="flex h-screen overflow-hidden" style={{ background: '#F4F5F7' }}>
+            <DashboardNav
+                userName={session.user?.name}
+                userEmail={session.user?.email}
+                isAdmin={session.user?.role === 'ADMIN'}
+            />
 
-            {/* Main Content */}
-            <div className="flex flex-1 flex-col overflow-hidden">
-                <header className="flex h-14 items-center gap-4 border-b bg-white dark:bg-gray-950 px-6">
-                    <div className="flex-1">
-                        <h1 className="font-semibold text-lg">Willkommen, {session.user?.name}</h1>
+            {/* Main area */}
+            <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+                {/* Topbar */}
+                <header className="flex h-14 items-center gap-4 border-b bg-white px-6 flex-shrink-0"
+                    style={{ borderColor: '#E8E9EB', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-500">
+                            Willkommen zurück, <span className="font-semibold text-gray-800">{session.user?.name || session.user?.email}</span>
+                        </p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <CartIcon />
-                        <span className="text-sm text-gray-500">{session.user?.email}</span>
-                        {/* UserMenu could go here */}
                     </div>
                 </header>
+
+                {/* Page content */}
                 <main className="flex-1 overflow-y-auto p-6">
                     {children}
                 </main>
