@@ -17,10 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PoolLeads – Lead Marktplatz für Poolbau",
   description: "Der Marktplatz für qualifizierte Poolbau-Leads",
-  icons: {
-    icon: "/favicon.png",
-    apple: "/favicon.png",
-  },
 };
 
 export default function RootLayout({
