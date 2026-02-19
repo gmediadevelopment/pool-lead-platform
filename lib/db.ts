@@ -262,17 +262,22 @@ export const db = {
         return rows as Lead[]
     },
 
-    async findLeadsByBuyerId(buyerId: string): Promise<Lead[]> {
+    async findLeadsByBuyerId(buyerId: string): Promise<any[]> {
         const pool = getPool()
         // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M convention)
+        // Left join Order to get purchase date
         const [rows] = await pool.execute(
-            `SELECT l.* FROM Lead l
+            `SELECT l.*, 
+                COALESCE(o.completedAt, o.createdAt) as purchasedAt,
+                COALESCE(pl.purchasePrice, l.price) as paidPrice
+             FROM Lead l
              INNER JOIN _PurchasedLeads pl ON l.id = pl.A
+             LEFT JOIN \`Order\` o ON pl.orderId = o.id
              WHERE pl.B = ?
-             ORDER BY l.createdAt DESC`,
+             ORDER BY purchasedAt DESC`,
             [buyerId]
         )
-        return rows as Lead[]
+        return rows as any[]
     },
 
     async findNewLeads(): Promise<Lead[]> {
@@ -715,7 +720,7 @@ export const db = {
         const pool = getPool()
         try {
             // _PurchasedLeads: A = Lead.id, B = User.id (Prisma implicit M2M)
-            // Use subquery to avoid ONLY_FULL_GROUP_BY issues
+            // Join with Order table to get actual purchase date
             const [rows] = await pool.execute(`
                 SELECT 
                     l.*,
@@ -729,10 +734,12 @@ export const db = {
                         pl.A as leadId,
                         COUNT(pl.B) as buyerCount,
                         GROUP_CONCAT(u.email SEPARATOR ', ') as buyerEmails,
-                        SUM(COALESCE(pl.purchasePrice, 0)) as totalRevenue,
-                        MAX(pl.purchasePrice) as lastSoldAt
+                        SUM(COALESCE(pl.purchasePrice, l2.price)) as totalRevenue,
+                        MAX(o.completedAt) as lastSoldAt
                     FROM _PurchasedLeads pl
                     INNER JOIN User u ON pl.B = u.id
+                    INNER JOIN Lead l2 ON pl.A = l2.id
+                    LEFT JOIN \`Order\` o ON pl.orderId = o.id
                     GROUP BY pl.A
                 ) buyer_counts ON l.id = buyer_counts.leadId
                 ORDER BY buyer_counts.lastSoldAt DESC

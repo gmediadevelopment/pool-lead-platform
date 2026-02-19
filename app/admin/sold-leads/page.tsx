@@ -7,7 +7,7 @@ export default async function SoldLeadsPage() {
     const soldLeads = await db.getSoldLeads()
 
     const totalRevenue = soldLeads.reduce((sum: number, lead: any) => {
-        return sum + (Number(lead.purchasePrice) || 0)
+        return sum + (Number(lead.totalRevenue) || 0)
     }, 0)
 
     return (
@@ -55,7 +55,7 @@ export default async function SoldLeadsPage() {
                                         <Badge variant="outline">{lead.poolType}</Badge>
                                         <Badge className="bg-green-600">
                                             <Euro className="h-3 w-3 mr-1" />
-                                            {Number(lead.purchasePrice || lead.price).toFixed(2)}€
+                                            {Number(lead.totalRevenue || lead.price).toFixed(2)}€
                                         </Badge>
                                         <Badge variant="secondary">
                                             {lead.status === 'SOLD' ? 'Ausverkauft' : 'Teilverkauft'}

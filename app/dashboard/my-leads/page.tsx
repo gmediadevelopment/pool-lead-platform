@@ -29,7 +29,12 @@ export default async function MyLeadsPage() {
                             <CardHeader>
                                 <div className="flex justify-between items-start">
                                     <Badge variant="outline">Gekauft</Badge>
-                                    <span className="text-sm text-muted-foreground">{new Date(lead.createdAt).toLocaleDateString()}</span>
+                                    <span className="text-sm text-muted-foreground">
+                                        {lead.purchasedAt
+                                            ? new Date(lead.purchasedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
+                                            : new Date(lead.createdAt).toLocaleDateString('de-DE')
+                                        }
+                                    </span>
                                 </div>
                                 <CardTitle className="mt-2">{lead.firstName} {lead.lastName}</CardTitle>
                                 <div className="flex items-center text-muted-foreground text-sm gap-1">
@@ -54,7 +59,9 @@ export default async function MyLeadsPage() {
                                         <p className="text-sm font-medium leading-none">Projektdaten</p>
                                         <p className="text-sm text-muted-foreground">Typ: {lead.poolType}</p>
                                         <p className="text-sm text-muted-foreground">Größe: {lead.dimensions}</p>
-                                        <p className="text-sm text-muted-foreground">Budget: {Number(lead.estimatedPrice).toLocaleString()} €</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Bezahlt: {Number(lead.paidPrice || lead.estimatedPrice || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                        </p>
                                     </div>
                                 </div>
                             </CardContent>
