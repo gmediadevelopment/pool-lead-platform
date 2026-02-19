@@ -1,16 +1,21 @@
-# .htaccess Template
-# NOTE: All environment variables are managed via Hostinger Dashboard
-# Do NOT add SetEnv entries here - use the Hostinger hPanel instead
+# .htaccess Template for Google Sheets Integration
+# COPY THIS FILE TO .htaccess AND FILL IN YOUR CREDENTIALS
 
-# Passenger configuration for Next.js
-PassengerEnabled on
-PassengerAppType node
-PassengerStartupFile server.js
-PassengerAppRoot /home/u328068506/domains/marktplatz.poolbau-vergleich.de/public_html
+# Set environment variables for Google Sheets Integration
 
-# Rewrite rules for Next.js
-RewriteEngine On
-RewriteBase /
-RewriteRule ^$ public/index.html [L]
-RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
-RewriteRule ^(.*)$ public/$1 [L]
+# Google Sheets Service Account Email
+SetEnv GOOGLE_CLIENT_EMAIL "pool-lead-sheets-sync@pool-lead-platform.iam.gserviceaccount.com"
+
+# Google Sheets Private Key
+# IMPORTANT: Replace this entire value with your private key from the JSON file
+# Keep the quotes and the \n characters exactly as shown
+SetEnv GOOGLE_PRIVATE_KEY "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+
+# Google Sheets Spreadsheet ID
+SetEnv GOOGLE_SHEETS_SPREADSHEET_ID "1uauVteOX5d9nK0nEaJ_wfw_jinRZCZFSrtB0Ge--nJE"
+
+# Google Sheets Range
+SetEnv GOOGLE_SHEETS_RANGE "Sheet1!A:Z"
+
+# Cron Secret (generate a random string for production)
+SetEnv CRON_SECRET "change-this-to-a-random-secret-key"
