@@ -108,7 +108,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 <select
                     value={sortBy}
                     onChange={e => setSortBy(e.target.value as any)}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                     <option value="newest">Neueste zuerst</option>
                     <option value="price_asc">Preis aufsteigend</option>
@@ -124,7 +124,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                     placeholder="z.B. 78 oder 40..."
                     value={filterZip}
                     onChange={e => setFilterZip(e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     maxLength={5}
                 />
             </div>
@@ -134,7 +134,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Lead-Typ</h3>
                 <div className="space-y-2">
                     {[
-                        { value: "CONSULTATION", label: "Beratung angefragt", color: "text-purple-700", bg: "bg-purple-50 border-purple-200", icon: Star },
+                        { value: "CONSULTATION", label: "Beratung angefragt", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: Star },
                         { value: "INTEREST", label: "Interesse", color: "text-blue-700", bg: "bg-blue-50 border-blue-200", icon: CheckCircle2 },
                     ].map(({ value, label, color, bg, icon: Icon }) => (
                         <label key={value} className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${filterType.includes(value) ? `${bg} border-current` : 'border-gray-200 hover:bg-gray-50'}`}>
@@ -157,11 +157,11 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 <div className="space-y-1.5">
                     {POOL_TYPES.map(type => (
                         <label key={type} className="flex items-center gap-2.5 cursor-pointer group">
-                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${filterPoolType.includes(type) ? 'bg-purple-600 border-purple-600' : 'border-gray-300 group-hover:border-purple-400'}`}>
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${filterPoolType.includes(type) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
                                 {filterPoolType.includes(type) && <X className="h-2.5 w-2.5 text-white" />}
                             </div>
                             <input type="checkbox" className="sr-only" checked={filterPoolType.includes(type)} onChange={() => toggle(filterPoolType, type, setFilterPoolType)} />
-                            <span className={`text-sm transition-colors ${filterPoolType.includes(type) ? 'text-purple-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{type}</span>
+                            <span className={`text-sm transition-colors ${filterPoolType.includes(type) ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{type}</span>
                         </label>
                     ))}
                 </div>
@@ -173,11 +173,11 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                 <div className="space-y-1.5">
                     {BUDGET_RANGES.map((range, i) => (
                         <label key={i} className="flex items-center gap-2.5 cursor-pointer group">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${filterBudget === i ? 'bg-purple-600 border-purple-600' : 'border-gray-300 group-hover:border-purple-400'}`}>
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${filterBudget === i ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
                                 {filterBudget === i && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                             </div>
                             <input type="radio" className="sr-only" checked={filterBudget === i} onChange={() => setFilterBudget(filterBudget === i ? null : i)} />
-                            <span className={`text-sm transition-colors ${filterBudget === i ? 'text-purple-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{range.label}</span>
+                            <span className={`text-sm transition-colors ${filterBudget === i ? 'text-blue-700 font-medium' : 'text-gray-600 group-hover:text-gray-800'}`}>{range.label}</span>
                         </label>
                     ))}
                 </div>
@@ -190,7 +190,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                     {TIMELINES.map(t => (
                         <button key={t}
                             onClick={() => toggle(filterTimeline, t, setFilterTimeline)}
-                            className={`text-xs px-2.5 py-1 rounded-full border transition-all ${filterTimeline.includes(t) ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-200 text-gray-600 hover:border-purple-400 hover:text-purple-600'}`}
+                            className={`text-xs px-2.5 py-1 rounded-full border transition-all ${filterTimeline.includes(t) ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600'}`}
                         >{t}</button>
                     ))}
                 </div>
@@ -208,7 +208,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                             <SlidersHorizontal className="h-4 w-4 text-gray-600" />
                             <span className="text-sm font-semibold text-gray-800">Filter</span>
                             {activeFilterCount > 0 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold" style={{ background: '#7B2FBE' }}>
+                                <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold" style={{ background: '#1E88D9' }}>
                                     {activeFilterCount}
                                 </span>
                             )}
@@ -257,7 +257,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                         <p className="text-gray-500 font-medium">Keine Leads gefunden</p>
                         <p className="text-sm text-gray-400 mt-1">Versuche andere Filter-Einstellungen.</p>
                         {activeFilterCount > 0 && (
-                            <button onClick={clearAll} className="mt-3 text-sm text-purple-600 hover:underline">Filter zurücksetzen</button>
+                            <button onClick={clearAll} className="mt-3 text-sm text-blue-600 hover:underline">Filter zurücksetzen</button>
                         )}
                     </div>
                 ) : (
@@ -268,19 +268,19 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                             const isConsultation = lead.type === "CONSULTATION"
 
                             return (
-                                <div key={lead.id} className={`relative rounded-xl border bg-white flex flex-col overflow-hidden transition-shadow hover:shadow-md ${isPurchased ? 'opacity-70' : ''} ${isConsultation ? 'border-purple-200' : 'border-gray-200'}`}>
+                                <div key={lead.id} className={`relative rounded-xl border bg-white flex flex-col overflow-hidden transition-shadow hover:shadow-md ${isPurchased ? 'opacity-70' : ''} ${isConsultation ? 'border-blue-200' : 'border-gray-200'}`}>
 
                                     {/* Consultation premium top bar */}
                                     {isConsultation && (
-                                        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #7B2FBE, #A855F7)' }} />
+                                        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #1E88D9, #5BB5F0)' }} />
                                     )}
 
                                     <div className="p-4 flex-1 flex flex-col">
                                         {/* Header row */}
                                         <div className="flex justify-between items-start mb-3">
                                             {isConsultation ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-purple-700 bg-purple-100">
-                                                    <Star className="h-3 w-3 fill-purple-500 text-purple-500" />
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold text-blue-700 bg-blue-100">
+                                                    <Star className="h-3 w-3 fill-blue-500 text-blue-500" />
                                                     Beratung angefragt
                                                 </span>
                                             ) : (
@@ -289,7 +289,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                                     Interesse
                                                 </span>
                                             )}
-                                            <span className={`font-bold text-lg ${isConsultation ? 'text-purple-700' : 'text-gray-800'}`}>
+                                            <span className={`font-bold text-lg ${isConsultation ? 'text-blue-700' : 'text-gray-800'}`}>
                                                 {Number(lead.price).toFixed(0)}€
                                             </span>
                                         </div>
@@ -320,7 +320,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                         </div>
 
                                         {/* Budget + Timeline box */}
-                                        <div className={`rounded-lg p-3 text-sm space-y-1.5 mb-3 ${isConsultation ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                                        <div className={`rounded-lg p-3 text-sm space-y-1.5 mb-3 ${isConsultation ? 'bg-blue-50' : 'bg-gray-50'}`}>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-500 flex items-center gap-1">
                                                     <Euro className="h-3.5 w-3.5" /> Budget
@@ -343,8 +343,8 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                                 </div>
                                             )}
                                             {isConsultation && (
-                                                <div className="pt-1 border-t border-purple-100">
-                                                    <span className="text-xs text-purple-600 font-medium">✓ Budget bestätigt – hat Beratung angefragt</span>
+                                                <div className="pt-1 border-t border-blue-100">
+                                                    <span className="text-xs text-blue-600 font-medium">✓ Budget bestätigt – hat Beratung angefragt</span>
                                                 </div>
                                             )}
                                         </div>
@@ -357,7 +357,7 @@ export function LeadsMarketplace({ leads, purchasedLeadIds, cartLeadIds }: Props
                                     </div>
 
                                     {/* Footer */}
-                                    <div className={`px-4 py-3 border-t flex gap-2 ${isConsultation ? 'bg-purple-50/50 border-purple-100' : 'bg-gray-50/50 border-gray-100'}`}>
+                                    <div className={`px-4 py-3 border-t flex gap-2 ${isConsultation ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50/50 border-gray-100'}`}>
                                         <AddToCartButton leadId={lead.id} isInCart={isInCart} isPurchased={isPurchased} size="sm" />
                                         {!isPurchased && <BuyNowButton leadId={lead.id} size="sm" />}
                                     </div>

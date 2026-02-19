@@ -38,7 +38,7 @@ export function CartIcon() {
                 <ShoppingCart className="h-5 w-5" />
                 {count > 0 && (
                     <span className="absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold"
-                        style={{ background: '#7B2FBE' }}>
+                        style={{ background: '#1E88D9' }}>
                         {count > 9 ? '9+' : count}
                     </span>
                 )}

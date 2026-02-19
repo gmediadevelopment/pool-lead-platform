@@ -31,7 +31,7 @@ export function DashboardNav({ userName, userEmail, isAdmin }: {
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, #7B2FBE, #9B59D8)' }}>
+                        style={{ background: 'linear-gradient(135deg, #1E88D9, #4BA8E8)' }}>
                         <Waves className="h-4 w-4 text-white" />
                     </div>
                     <span className="font-bold text-white text-base tracking-tight">PoolLeads</span>
@@ -50,8 +50,8 @@ export function DashboardNav({ userName, userEmail, isAdmin }: {
                                         : 'text-white/60 hover:text-white hover:bg-white/8'
                                     }`}
                                 style={isActive ? {
-                                    background: 'linear-gradient(135deg, rgba(123,47,190,0.9), rgba(123,47,190,0.7))',
-                                    boxShadow: '0 2px 8px rgba(123,47,190,0.4)'
+                                    background: 'linear-gradient(135deg, rgba(30,136,217,0.9), rgba(30,136,217,0.7))',
+                                    boxShadow: '0 2px 8px rgba(30,136,217,0.4)'
                                 } : {}}
                             >
                                 <Icon className={`h-4 w-4 flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`} />
@@ -77,7 +77,7 @@ export function DashboardNav({ userName, userEmail, isAdmin }: {
                 <div className="px-3 py-3 border-t border-white/10">
                     <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/5">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                            style={{ background: 'linear-gradient(135deg, #7B2FBE, #9B4DDB)' }}>
+                            style={{ background: 'linear-gradient(135deg, #1E88D9, #4BA8E8)' }}>
                             {userName?.charAt(0).toUpperCase() || userEmail?.charAt(0).toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
