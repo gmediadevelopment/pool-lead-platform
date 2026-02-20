@@ -6,11 +6,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Limit build parallelism to reduce peak memory usage
-  experimental: {
-    workerThreads: false,
-    cpus: 1,
-  },
 };
 
 export default nextConfig;
