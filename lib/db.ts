@@ -303,6 +303,17 @@ export const db = {
         return rows as Lead[]
     },
 
+    // Targeted single-lead lookup - use this instead of findVerifiedLeads().find() to save RAM
+    async findLeadById(id: string): Promise<Lead | null> {
+        const pool = getPool()
+        const [rows] = await pool.execute(
+            'SELECT * FROM `Lead` WHERE id = ? LIMIT 1',
+            [id]
+        )
+        const leads = rows as Lead[]
+        return leads.length > 0 ? leads[0] : null
+    },
+
     async updateLead(id: string, data: Partial<Lead>): Promise<void> {
         const pool = getPool()
         const updates: string[] = []

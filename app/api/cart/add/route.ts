@@ -17,11 +17,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'leadId is required' }, { status: 400 })
         }
 
-        // Check if lead exists and is available
-        const leads = await db.findVerifiedLeads()
-        const lead = leads.find(l => l.id === leadId)
+        // Targeted single-lead lookup - avoids loading ALL leads into RAM
+        const lead = await db.findLeadById(leadId)
 
-        if (!lead) {
+        if (!lead || lead.status !== 'PUBLISHED') {
             return NextResponse.json({ error: 'Lead not found or not available' }, { status: 404 })
         }
 
