@@ -4,12 +4,8 @@ import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2, Mail, Lock, Waves } from "lucide-react"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
     const router = useRouter()
@@ -34,7 +30,7 @@ export default function LoginPage() {
                 toast.error("Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Daten.")
             } else {
                 toast.success("Erfolgreich eingeloggt!")
-                router.push("/dashboard") // Will allow middleware to redirect based on role later
+                router.push("/dashboard")
                 router.refresh()
             }
         } catch (error) {
@@ -45,37 +41,221 @@ export default function LoginPage() {
     }
 
     return (
-        <Card className="w-full max-w-sm">
-            <CardHeader>
-                <CardTitle className="text-2xl">Login</CardTitle>
-                <CardDescription>
-                    Geben Sie Ihre E-Mail-Adresse ein, um sich anzumelden.
-                </CardDescription>
-            </CardHeader>
-            <form onSubmit={onSubmit}>
-                <CardContent className="grid gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">E-Mail</Label>
-                        <Input id="email" name="email" type="email" placeholder="m@example.com" required disabled={isLoading} />
+        <div style={{
+            width: '100%',
+            maxWidth: '420px',
+            background: 'white',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+        }}>
+            {/* Brand Header */}
+            <div style={{
+                background: 'linear-gradient(135deg, #1B1B2E 0%, #1e3a5f 60%, #1E88D9 100%)',
+                padding: '32px 32px 28px',
+                textAlign: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+            }}>
+                {/* Decorative wave element */}
+                <div style={{
+                    position: 'absolute',
+                    bottom: '-1px',
+                    left: 0,
+                    right: 0,
+                    height: '20px',
+                    background: 'white',
+                    borderRadius: '50% 50% 0 0 / 20px 20px 0 0',
+                }} />
+                <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '16px',
+                    background: 'rgba(255,255,255,0.12)',
+                    marginBottom: '16px',
+                    backdropFilter: 'blur(10px)',
+                }}>
+                    <Waves style={{ width: '28px', height: '28px', color: '#60afff' }} />
+                </div>
+                <h1 style={{
+                    color: 'white',
+                    fontSize: '22px',
+                    fontWeight: 700,
+                    margin: '0 0 4px',
+                    letterSpacing: '-0.3px',
+                }}>
+                    Poolbau Marktplatz
+                </h1>
+                <p style={{
+                    color: 'rgba(255,255,255,0.6)',
+                    fontSize: '13px',
+                    margin: 0,
+                }}>
+                    Qualifizierte Pool-Leads kaufen
+                </p>
+            </div>
+
+            {/* Form */}
+            <div style={{ padding: '28px 32px 32px' }}>
+                <h2 style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    margin: '0 0 6px',
+                }}>
+                    Willkommen zurück
+                </h2>
+                <p style={{
+                    fontSize: '13px',
+                    color: '#64748b',
+                    margin: '0 0 24px',
+                }}>
+                    Melden Sie sich mit Ihrem Konto an.
+                </p>
+
+                <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* Email */}
+                    <div>
+                        <label htmlFor="email" style={{
+                            display: 'block',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            marginBottom: '6px',
+                        }}>
+                            E-Mail
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <Mail style={{
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                width: '16px',
+                                height: '16px',
+                                color: '#94a3b8',
+                                pointerEvents: 'none',
+                            }} />
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="name@firma.de"
+                                required
+                                disabled={isLoading}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px 10px 36px',
+                                    border: '1.5px solid #e2e8f0',
+                                    borderRadius: '10px',
+                                    fontSize: '14px',
+                                    color: '#0f172a',
+                                    background: '#f8fafc',
+                                    outline: 'none',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.15s',
+                                }}
+                                onFocus={e => (e.target.style.borderColor = '#1E88D9')}
+                                onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
+                            />
+                        </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Passwort</Label>
-                        <Input id="password" name="password" type="password" required disabled={isLoading} />
+
+                    {/* Password */}
+                    <div>
+                        <label htmlFor="password" style={{
+                            display: 'block',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            marginBottom: '6px',
+                        }}>
+                            Passwort
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <Lock style={{
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                width: '16px',
+                                height: '16px',
+                                color: '#94a3b8',
+                                pointerEvents: 'none',
+                            }} />
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                                disabled={isLoading}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px 10px 36px',
+                                    border: '1.5px solid #e2e8f0',
+                                    borderRadius: '10px',
+                                    fontSize: '14px',
+                                    color: '#0f172a',
+                                    background: '#f8fafc',
+                                    outline: 'none',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.15s',
+                                }}
+                                onFocus={e => (e.target.style.borderColor = '#1E88D9')}
+                                onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
+                            />
+                        </div>
                     </div>
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                    <Button className="w-full" type="submit" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Anmelden
-                    </Button>
-                    <div className="text-center text-sm">
-                        Noch kein Konto?{" "}
-                        <Link href="/register" className="underline">
-                            Registrieren
-                        </Link>
-                    </div>
-                </CardFooter>
-            </form>
-        </Card>
+
+                    {/* Submit */}
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            background: isLoading ? '#93c5fd' : 'linear-gradient(135deg, #1E88D9 0%, #1a6cb8 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            marginTop: '4px',
+                            transition: 'opacity 0.15s',
+                            boxShadow: '0 4px 12px rgba(30,136,217,0.3)',
+                        }}
+                    >
+                        {isLoading && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
+                        {isLoading ? 'Anmeldung...' : 'Anmelden'}
+                    </button>
+                </form>
+
+                {/* Register link */}
+                <p style={{
+                    textAlign: 'center',
+                    marginTop: '20px',
+                    fontSize: '13px',
+                    color: '#64748b',
+                }}>
+                    Noch kein Konto?{' '}
+                    <Link href="/register" style={{
+                        color: '#1E88D9',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                    }}>
+                        Jetzt registrieren
+                    </Link>
+                </p>
+            </div>
+        </div>
     )
 }
