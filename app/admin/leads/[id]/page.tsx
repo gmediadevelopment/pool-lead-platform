@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 
 export default async function EditLeadPage({ params }: { params: { id: string } }) {
-    const leads = await db.findVerifiedLeads()
-    const lead = leads.find(l => l.id === params.id)
+    const lead = await db.findLeadById(params.id)
 
     if (!lead) {
         notFound()

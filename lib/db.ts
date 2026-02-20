@@ -249,6 +249,7 @@ export const db = {
         if (excludeUserId) {
             // Exclude leads already purchased by this user
             // _PurchasedLeads: A = Lead.id (alphabetically first), B = User.id
+            // LIMIT 100 to prevent OOM on low-RAM servers
             const [rows] = await pool.execute(`
                 SELECT l.* FROM Lead l
                 WHERE l.status = 'PUBLISHED'
@@ -256,11 +257,12 @@ export const db = {
                     SELECT A FROM _PurchasedLeads WHERE B = ?
                 )
                 ORDER BY l.createdAt DESC
+                LIMIT 100
             `, [excludeUserId])
             return rows as Lead[]
         }
         const [rows] = await pool.execute(
-            'SELECT * FROM Lead WHERE status = ? ORDER BY createdAt DESC',
+            'SELECT * FROM Lead WHERE status = ? ORDER BY createdAt DESC LIMIT 100',
             ['PUBLISHED']
         )
         return rows as Lead[]

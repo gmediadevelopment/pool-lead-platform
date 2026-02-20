@@ -8,8 +8,7 @@ import Link from "next/link"
 import { updateLeadAction } from "../../actions"
 
 export default async function EditLeadPage({ params }: { params: { id: string } }) {
-    const leads = await db.findVerifiedLeads()
-    const lead = leads.find(l => l.id === params.id)
+    const lead = await db.findLeadById(params.id)
 
     if (!lead) {
         notFound()
